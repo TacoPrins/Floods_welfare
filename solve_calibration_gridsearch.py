@@ -171,7 +171,8 @@ class ResidualsWithMemory:
         par = misc.construct_jitclass(par_dict)
         mMarkov, vE = tauch.tauchen(par.dRho, par.dSigmaeps, par.iNumStates, par.iM, par.time_increment)
         grids, mMarkov=grid_creation.create(par)        
-        #dP_C_guess, dP_NC_guess, vCoeff_C_new, vCoeff_NC_new, mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, no_beq, iteration=equil.initialise_coefficients_initial(par, grids, method, dPi_L, par.iNj, mMarkov, vCoeff_C_initial, vCoeff_NC_initial, bequest_guess)      
+        method='secant'
+        dP_C_guess, dP_NC_guess, vCoeff_C_new, vCoeff_NC_new, mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, no_beq, iteration=equil.initialise_coefficients_initial(par, grids, method, dPi_L, par.iNj, mMarkov, vCoeff_C_initial, vCoeff_NC_initial, bequest_guess)      
         vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter = household_problem.solve_initial(grids, par, dPi_L, par.iNj, mMarkov, vCoeff_C_initial[0],vCoeff_NC_initial[0])
         mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, vcoastal_beq, vnoncoastal_beq, vsavings_beq, no_beq=sim.stat_dist_finder(False, grids, par, mMarkov, dPi_L, par.iNj, vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,], b_stay_nc[0,], b_renter[0,], vCoeff_C_initial,vCoeff_NC_initial, np.zeros((3)))
 
@@ -196,8 +197,8 @@ class ResidualsWithMemory:
         print("Third residual", res[2])
         print("Fourth residual", res[3])
         print("Fifth residual", res[4])
-        self.vCoeff_C = vCoeff_C_initial.copy()
-        self.vCoeff_NC = vCoeff_NC_initial.copy()
+        self.vCoeff_C = vCoeff_C_new.copy()
+        self.vCoeff_NC = vCoeff_NC_new.copy()
         self.bequest_guess = bequest_guess
         
         return res
