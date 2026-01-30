@@ -1168,5 +1168,6 @@ def renter_solve(par, grids, g_index, rental_price_lom_C, rental_price_lom_NC, r
         h_share=weight_C*h_share_C+(1-weight_C)*h_share_NC
         w=weight_C*w_C+(1-weight_C)*w_NC
         g_renter=weight_C*g+(1-weight_C)
+        coastal_rent_share=weight_C
         
     return h_share_lom, w_lom, h_share, w, rental_price_lom, rental_price, coastal_rent_share, g_renter_lom, g_renter
