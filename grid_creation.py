@@ -40,7 +40,8 @@ def create(par):
 
 
     vL_sim=np.linspace(0, 1.05, 30)
-    vH=  np.array([1.50, 1.92, 2.46, 3.15, 4.03, 5.15])
+    #vH=  np.array([1.50, 1.92, 2.46, 3.15, 4.03, 5.15])
+    vH=np.linspace(1.50,par.h_max,3)
     vH_renter=np.array([1.17, 1.92])
     
     
@@ -98,10 +99,13 @@ def create(par):
         vM_sim=vX_sim       
     """
     max_income=np.exp(np.max(vChi)+np.max(vE_combined)-np.log(median_inc))
-    vX=grid.nonlinspace_jit(min_inc, par.iBmax*(1+par.r)+max_income, par.iNb, 1.4)
+    #vX=grid.nonlinspace_jit(min_inc, par.iBmax*(1+par.r)+max_income, par.iNb, 1.4)
+    #The lowest value of vX should be s.t. the smallest rental unit remains affordable with pos consumption. 
+    vX=grid.nonlinspace_jit((1-(1-par.dDelta)/(1+par.r))*vH_renter[0]+par.dPsi, par.iBmax*(1+par.r)+max_income, par.iNb, 1.4)
+    #vX=grid.nonlinspace_jit((1-(1-par.dDelta)/(1+par.r))*vH_renter[0]+par.dPsi, 10, par.iNb, 1.4)
     vM=grid.nonlinspace_jit(0.01, par.iBmax*(1+par.r)+max_income, par.iNb, 1.4)
     vB=grid.nonlinspace_jit(0, par.iBmax, par.iNb, 1.4)
-    vX_sim=grid.nonlinspace_jit(0, par.iBmax, par.iNb*2, 1.2)
+    vX_sim=grid.nonlinspace_jit(0, par.iBmax, par.iNb*2, 1)
     vM_sim=vX_sim #vX_sim and vM_sim are clunkily named savings grids for simulation with twice the grid points
     
     
