@@ -15,7 +15,7 @@ replace networthscf=0 if networthscf<1000
 gen nowealth=0
 replace nowealth=1 if networthscf<=0  
 logit nowealth ln_labincwork [fweight=fwgt]
-/*
+
 *Find variance of wealth and correlation with lab income conditional on having positive wealth
 gen ln_networthscf=ln(networthscf) if networthscf>0
 sum ln_networthscf   [fweight=fwgt] if ln_networthscf!=., det
@@ -46,3 +46,17 @@ forvalues a = 21(1)65 {
     di `a'
 	di _b[_cons]+_b[age]*`a'+_b[age2]*`a'^2+_b[age3]*`a'^3+_b[age4]*`a'^4
 }
+
+*Generate statistics for end-of-life wealth inequality 
+use "C:\Users\TPRINS\OneDrive - UvA\Documenten\Stata files\kaplan_violante_ecmtra_2014_replicationmaterials (1)\ReplicationFiles\SCF\data\scf2001_defs.dta", clear
+keep if age>=75 & age<81 & age!=. & networthscf!=.
+sum networthscf   [fweight=fwgt], det
+
+_pctile networthscf [fweight=fwgt], p(33 67)
+di r(r2)/r(r1)
+
+gen financial_wealth=networthscf - nethouse
+keep if financial_wealth!=.
+sum financial_wealth [fweight=fwgt], det
+_pctile financial_wealth [fweight=fwgt], p(33 67)
+di r(r2)/r(r1)
