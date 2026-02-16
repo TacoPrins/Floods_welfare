@@ -5,14 +5,23 @@ time_increment=2
 vPi_S_median=np.array([0.0194,    0.0198,    0.0202,    0.0206,    0.0210,    0.0214,    0.0218,    0.0222,    0.0226,    0.0230,    0.0234,    0.0239,    0.0243,
                        0.0248,    0.0254,    0.0259,    0.0265,    0.0273,    0.0280,   0.0289,    0.0300,    0.0310,    0.0321,    0.0333,    0.0347,    0.0361,
 0.0376,    0.0392,    0.0410,    0.0427,    0.0444,    0.0461,    0.0478,    0.0495,    0.0513,    0.0530,    0.0547,    0.0565,    0.0583,
-0.0601,    0.0619,    0.0637,    0.0654,    0.0672,    0.0690,    0.0708,    0.0726,    0.0744,    0.0762,    0.0780,    0.0798,    0.0816])
+0.0601,    0.0619,    0.0637,    0.0654,    0.0672,    0.0690,    0.0708,    0.0726,    0.0744,    0.0762,    0.0780,    0.0798,    0.0816,    0.0816,    0.0816,    0.0816,    0.0816])
+#vPi_S_median=np.array([0.0194, 0.0194,0.0194])
+
+
+
+#vPi_S_median=np.array([0.0816,    0.0198,    0.0202,    0.0206,    0.0210,    0.0214,    0.0218,    0.0222,    0.0226,    0.0230,    0.0234,    0.0239,    0.0243,
+#                       0.0248,    0.0254,    0.0259,    0.0265,    0.0273,    0.0280,   0.0289,    0.0300,    0.0310,    0.0321,    0.0333,    0.0347,    0.0361,
+#0.0376,    0.0392,    0.0410,    0.0427,    0.0444,    0.0461,    0.0478,    0.0495,    0.0513,    0.0530,    0.0547,    0.0565,    0.0583,
+#0.0601,    0.0619,    0.0637,    0.0654,    0.0672,    0.0690,    0.0708,    0.0726,    0.0744,    0.0762,    0.0780,    0.0798,    0.0816])
+
 vPi_S_median=1-(1-vPi_S_median)**time_increment    
 
 
 par_dict = {"time_increment": time_increment,
           "iNj": 30,
           "j_ret": 23,
-          "dBeta": 0.94**time_increment, 
+          "dBeta": 0.945**time_increment, 
           "dDelta": 1-(1-0.015)**time_increment, 
           #"dDelta_rental": 1.04**time_increment-1, 
           "dPsi": 0.008,
@@ -25,7 +34,7 @@ par_dict = {"time_increment": time_increment,
           "dKappa_sell": 0.07,
           "dKappa_buy": 0,
           "dXi_foreclosure": 0.8,
-          "dNu": 90,
+          "dNu": 110,
           "dZeta": 0.01, 
           "dZeta_fixed": 1/26, 
           "lambda_pti":0.25,
@@ -34,8 +43,8 @@ par_dict = {"time_increment": time_increment,
           "dLambda": 0.8,
           "dGamma": 1/1.25,
           "dSigma": 2,
-          "b_bar":7.7 ,
-          "dPhi":  0.12,
+          "b_bar":8.7 ,
+          "dPhi":  0.18,
           "nonlingrid": 1,
           "nonlingrid_big": 1,  
           #"iNb_left_tail": 20,
@@ -61,7 +70,7 @@ par_dict = {"time_increment": time_increment,
           'dC_frac': 0.5,
           'dTheta': 1.5/2.5, 
           'dL': 0.311,
-          'dOmega': 1.015,
+          'dOmega': 1.01,
           'sd_income_initial': .3228617,
           'beta0_nowealth': -.9910767, #=Constant in logit regression nowealth=1 on log income in lowest age bracket
           'beta1_nowealth': -.3417672, #=Coeff on log income (in terms of sds away from the median) in logit regression nowealth=1 on log income in lowest age bracket
