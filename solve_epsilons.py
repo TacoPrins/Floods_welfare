@@ -45,14 +45,16 @@ import moments as find_moments
 ### main
 def main():
     # import parameters
-    vCoeff_C_initial=np.array([0.61698538, 0.,         0.,         0.,         0.        ])
-    vCoeff_NC_initial=np.array([0.64402887, 0.,         0.,         0.,         0.        ])
-    vCoeff_C=np.array([ 0.59645625, -0.0116896,   0.00940115, -0.00470584,  0.00263339])
-    vCoeff_NC=np.array([  0.64764754, -0.00559944,  0.00542587, -0.00547244,  0.00509117])
-    vCoeff_C_RE=np.array([  5.50914024e-01, -4.94257772e-02,  7.59725397e-03,  3.70388122e-04,
-      1.22941422e-03])
-    vCoeff_NC_RE=np.array([ 6.77114747e-01,  1.84034581e-02, -2.53439884e-03, -6.67967002e-04,
-      3.73928643e-04])
+    #vCoeff_C_initial=np.array([0.72392258, 0.,         0.,         0.,         0.        ])
+    #vCoeff_NC_initial=np.array([0.76693964, 0.,         0.,         0.,         0.        ])
+    vCoeff_C_initial=np.array([0.72414899, 0.,         0.,         0.,         0.        ])
+    vCoeff_NC_initial=np.array([0.76734488, 0.,         0.,         0.,         0.        ])
+    #vCoeff_C_initial=np.array([0.56, 0.,         0.,         0.,         0.        ])
+    #vCoeff_NC_initial=np.array([0.85, 0.,         0.,         0.,         0.        ])
+    #vCoeff_C_initial=np.array([0.6732231829966053, 0.,         0.,         0.,         0.        ])
+    #vCoeff_NC_initial=np.array([0.7170390048443882, 0.,         0.,         0.,         0.        ])
+    
+    #Initial guess: prices change around 10% over whole period in response to rising flood risk
     dPi_L = 0.01
     method='secant'
     results_vector=np.zeros((30))
@@ -60,14 +62,137 @@ def main():
     par = misc.construct_jitclass(parfile.par_dict)
     max_ltv=0.95
     
+    
+    
+    
+ 
     # create grids
-
+    
     mMarkov, vE = tauch.tauchen(par.dRho, par.dSigmaeps, par.iNumStates, par.iM, par.time_increment)
     grids, mMarkov=grid_creation.create(par)
-
+    
+    
+    #Create initial guess for house prices - coastal price falls one to one with flood risk, and noncoastal rises by less than half 
+    #t_cheby=(2*grids.vTime-(grids.vTime[0]+grids.vTime[-1]))/(grids.vTime[-1]-grids.vTime[0])
+    #t_1=t_cheby
+    #t_2=2*t_cheby**2-1
+    #t_3=4*t_cheby**3-3*t_cheby
+    #t_4=8*t_cheby**4-8*t_cheby**2+1
+    
+    #X = np.column_stack((t_1, t_2, t_3, t_4))    
+    #X = np.column_stack((np.ones(len(X)), X))
+    #y_c=(1-1*(par.vPi_S_median-par.vPi_S_median[0]))*vCoeff_C_initial[0]
+    #beta_c = np.linalg.inv(X.T @ X) @ X.T @ y_c
+    #y_nc=(1+0.25*(par.vPi_S_median-par.vPi_S_median[0]))*vCoeff_NC_initial[0]
+    #beta_nc = np.linalg.inv(X.T @ X) @ X.T @ y_nc
+    vCoeff_C=vCoeff_C_initial
+    vCoeff_C_RE=np.array([ 0.66131548, -0.05658024,  0.00335141,  0.00720003,  0.00200794])
+    vCoeff_NC=vCoeff_NC_initial
+    vCoeff_NC_RE=np.array([ 8.12788151e-01,  3.63663858e-02, -3.01088988e-03, -4.55020052e-03,
+     -2.91834972e-04])
+    """
+    vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = household_problem.solve(grids, par, dPi_L, par.iNj, mMarkov,vCoeff_C,vCoeff_NC)
+    for t_index in range(grids.vTime.size):
+        plt.plot(grids.vM, vt_stay_c[t_index,5, 0,0 , :, 0, 0,2],label=f'{t_index}')        
+        plt.title( 'vt, J = -5')
+        plt.xlabel('Cash in hand')
+        plt.ylabel('Cons')
+        plt.legend(loc = 4)
+        plt.show()
+        plt.clf()    
+        
+ 
+       
+    for l_index in range(grids.vL.size):
+        plt.plot(grids.vM, vt_stay_c[28,5, 0,0 , :, 0, l_index,2],label=f'{l_index}')        
+        plt.title( 'vt, J = -5')
+        plt.xlabel('Cash in hand')
+        plt.ylabel('Cons')
+        plt.legend(loc = 4)
+        plt.show()
+        plt.clf()    
+        
+    for l_index in range(grids.vL.size):
+        plt.plot(grids.vM, b_stay_c[28,5, 0,0 , :, 0, l_index,2],label=f'{l_index}')        
+        plt.title( 'b, J = 5')
+        plt.xlabel('Cash in hand')
+        plt.ylabel('Cons')
+        plt.legend(loc = 4)
+        plt.show()
+        plt.clf()    
+        
+    for l_index in range(grids.vL.size):
+        plt.plot(grids.vM, vt_stay_nc[28,5, 0,0 , :, 0, l_index,2],label=f'{l_index}')        
+        plt.title( 'vt, J = -5')
+        plt.xlabel('Cash in hand')
+        plt.ylabel('Cons')
+        plt.legend(loc = 4)
+        plt.show()
+        plt.clf()    
+        
+    for l_index in range(grids.vL.size):
+        plt.plot(grids.vM, b_stay_nc[28,5, 0,0 , :, 0, l_index,2],label=f'{l_index}')        
+        plt.title( 'b, J = 5')
+        plt.xlabel('Cash in hand')
+        plt.ylabel('Cons')
+        plt.legend(loc = 4)
+        plt.show()
+        plt.clf()   
    
-    #dP_C_guess, dP_NC_guess, vCoeff_C_initial, vCoeff_NC_initial, mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, no_beq, iteration=equil.initialise_coefficients_initial(par, grids, method, dPi_L, par.iNj, mMarkov, vCoeff_C_initial, vCoeff_NC_initial, np.zeros((3)))
-     
+    #initial_welfare, initial_welfare_vec=welfare.welfare_calculator_initial(method, par, grids, dPi_L, par.iNj, mMarkov, vCoeff_C_initial,vCoeff_NC_initial, max_ltv)
+    #print(initial_welfare)
+    #print(initial_welfare_vec)
+    """
+    dP_C_guess, dP_NC_guess, vCoeff_C_initial, vCoeff_NC_initial, mDist0_c_initial, mDist0_nc_initial, mDist0_renter_initial, rental_stock_C0_initial, rental_stock_NC0_initial, coastal_beq0_initial, noncoastal_beq0_initial, savings_beq0_initial, no_beq, iteration=equil.initialise_coefficients_initial(par, grids, method, dPi_L, par.iNj, mMarkov, vCoeff_C_initial, vCoeff_NC_initial, np.zeros((3)))
+    
+    HO_C_share, HO_NC_share, R_C_share, R_NC_share, total_NW_HO_C, total_NW_HO_NC, total_NW_R, total_NW_HO, total_NW_age_9, total_NW_age_17, total_NW_all_ages, median_NW_age_9, median_NW_age_17, median_NW_all_ages, thirtythree_percentile_NW_age_17, sixtyseven_percentile_NW_age_17, tenth_percentile_housing, median_housing, ninetieth_percentile_housing, cumdens_housing_all_ages, NW_housing_share_sorted=find_moments.calc_moments(par, grids, 0, mDist0_c_initial, mDist0_nc_initial,mDist0_renter_initial, grids.vPi_S_median[0], dPi_L, vCoeff_C_initial, vCoeff_NC_initial)
+  
+    res=np.zeros((5))
+    res[0]=(median_NW_all_ages-1.2)/1.2
+    res[1]=(median_housing-0.5)/0.5
+    res[2]=(median_NW_age_17/median_NW_age_9-1.51)/1.51
+    res[3]=(no_beq-0.2782155)/0.2782155
+    res[4]=(HO_C_share+HO_NC_share-0.66)/0.66
+    
+    print(total_NW_all_ages)
+    print(median_NW_all_ages)
+    print(median_housing)
+    print(median_NW_age_17/median_NW_age_9)
+    print(no_beq)
+    print(HO_C_share+HO_NC_share)
+    
+    print("First residual:", res[0])
+    print("Second residual:", res[1])
+    print("Third residual", res[2])
+    print("Fourth residual", res[3])
+    print("Fifth residual", res[4])
+    
+    #dP_C_vec, dP_NC_vec, vCoeff_C, vCoeff_NC, iteration, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=equil.find_coefficients(par, grids, method, False, dPi_L, par.iNj, mMarkov, vCoeff_C_RE, vCoeff_NC_RE,vCoeff_C_initial, vCoeff_NC_initial,mDist0_c_initial, mDist0_nc_initial, mDist0_renter_initial, rental_stock_C0_initial, rental_stock_NC0_initial, coastal_beq0_initial, noncoastal_beq0_initial, savings_beq0_initial)
+    #df = pd.DataFrame(vCoeff_C)
+    #df.to_excel("dP_C_vec_RE")
+    #df = pd.DataFrame(vCoeff_NC)
+    #df.to_excel("dP_NC_vec_RE")
+    
+ 
+ 
+    mDist0_c = np.zeros((par.iNj, grids.vK.size, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size,grids.vE.size))
+    mDist0_nc = np.zeros((par.iNj, grids.vK.size, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size,grids.vE.size))
+    mDist0_renter = np.zeros((par.iNj, grids.vK.size, grids.vG.size, grids.vX_sim.size, grids.vE.size))
+    
+    mDist0_c[:,0,:,:,:,:,:]=grids.vTypes[0]*mDist0_c_initial[:,0,:,:,:,:,:]
+    mDist0_nc[:,0,:,:,:,:,:]=grids.vTypes[0]*mDist0_nc_initial[:,0,:,:,:,:,:]
+    mDist0_renter[:,0,:,:,:]=grids.vTypes[0]*mDist0_renter_initial[:,0,:,:,:]
+    
+    mDist0_c[:,1,:,:,:,:,:]=grids.vTypes[1]*mDist0_c_initial[:,0,:,:,:,:,:]
+    mDist0_nc[:,1,:,:,:,:,:]=grids.vTypes[1]*mDist0_nc_initial[:,0,:,:,:,:,:]
+    mDist0_renter[:,1,:,:,:]=grids.vTypes[1]*mDist0_renter_initial[:,0,:,:,:]
+    
+    dP_C_vec, dP_NC_vec, vCoeff_C, vCoeff_NC, iteration, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=equil.find_coefficients(par, grids, method, True, dPi_L, par.iNj, mMarkov, vCoeff_C, vCoeff_NC,vCoeff_C_initial, vCoeff_NC_initial,mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0_initial, rental_stock_NC0_initial, coastal_beq0_initial, noncoastal_beq0_initial, savings_beq0_initial)
+    df = pd.DataFrame(vCoeff_C)
+    df.to_excel("dP_C_vec_HE")
+    df = pd.DataFrame(vCoeff_NC)
+    df.to_excel("dP_NC_vec_HE")
+   
     """
     results_vector[0:5]=vCoeff_C_initial
     results_vector[5:10]=vCoeff_NC_initial
@@ -97,7 +222,7 @@ def main():
 
     df = pd.DataFrame(results_vector)
     df.to_excel("results_vector.xlsx")
-
+   
   
     #mDist1_c, mDist1_nc, mDist1_renter, rental_stock, coastal_beq, noncoastal_beq, savings_beq=sim.stat_dist_finder(True, grids, par, mMarkov, dPi_L, iNj, vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,], b_stay_nc[0,], b_renter[0,], vCoeff_C,vCoeff_NC)
     #for t_index in range(9):
@@ -260,10 +385,43 @@ def main():
     #        plt.legend(loc = 4)
     #    plt.show()
     #    plt.clf()   
-    """
-    vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter = household_problem.solve_initial(grids, par, dPi_L, par.iNj, mMarkov, vCoeff_C_initial[0],vCoeff_NC_initial[0])
-    """
     
+   
+    
+    
+    vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter = household_problem.solve_initial(grids, par, dPi_L, par.iNj, mMarkov, vCoeff_C_initial[0],vCoeff_NC_initial[0])
+    plt.plot(grids.vM, vt_stay_c[0,0, 0, 1, :, 1, 0,3],  label='coastal, L = 0, H = 1')
+    plt.title( 'vt, J = -5')
+    plt.xlabel('Cash in hand')
+    plt.ylabel('Cons')
+    plt.legend(loc = 4)
+    plt.show()
+    plt.clf()
+    
+    plt.plot(grids.vM, vt_stay_nc[0,0, 0,1 , :, 1, 0,3], label = 'noncoastal, L = 0, H = 1')        
+    plt.title( 'vt, J = -5')
+    plt.xlabel('Cash in hand')
+    plt.ylabel('Cons')
+    plt.legend(loc = 4)
+    plt.show()
+    plt.clf()    
+    
+    plt.plot(grids.vM, vt_stay_c[0,0, 0, 1, :, 1, -5,3],  label='coastal, L = -5, H = 1')
+    plt.title( 'vt, J = -5')
+    plt.xlabel('Cash in hand')
+    plt.ylabel('Cons')
+    plt.legend(loc = 4)
+    plt.show()
+    plt.clf()
+    
+    plt.plot(grids.vM, vt_stay_nc[0,0, 0,1 , :, 1, -5,3], label = 'noncoastal, L = -5, H = 1')        
+    plt.title( 'vt, J = -5')
+    plt.xlabel('Cash in hand')
+    plt.ylabel('Cons')
+    plt.legend(loc = 4)
+    plt.show()
+    plt.clf()    
+
     for l_index in range(grids.vL.size):
         plt.plot(grids.vM, b_stay_nc[0,-1,0,0,:,0,l_index,0], label=f'{l_index}')
     plt.legend(loc = 4)
@@ -337,8 +495,7 @@ def main():
     plt.legend(loc = 4)
     plt.show()
     plt.clf()  
-    """
-    
+  
     initialise=True
     #t0 = time.time()
     mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, vcoastal_beq, vnoncoastal_beq, vsavings_beq, no_beq=sim.stat_dist_finder(False, grids, par, mMarkov, dPi_L, par.iNj, vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,], b_stay_nc[0,], b_renter[0,], vCoeff_C_initial,vCoeff_NC_initial, np.zeros((3)))
@@ -370,7 +527,7 @@ def main():
     initialise=True
     dP_C=lom.LoM_C(grids, 0,vCoeff_C_initial)
     dP_NC=lom.LoM_NC(grids, 0,vCoeff_NC_initial)
-    excess_demand_C_stock, excess_demand_NC_stock, net_demand_C, net_demand_NC, investment_C, investment_NC, stock_demand_rental_C, rental_stock_C, stock_demand_rental_NC, rental_stock_NC=sim.excess_demand_continuous(False, initialise, grids, par,0, mMarkov, dPi_L, par.iNj, mDist1_c, mDist1_nc, mDist1_renter, dP_C, dP_NC,  vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,],  b_stay_nc[0,], b_renter[0,], rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq,vCoeff_C_initial,vCoeff_NC_initial)
+    excess_demand_C_stock, excess_demand_NC_stock, net_demand_C, net_demand_NC, investment_C, investment_NC, stock_demand_rental_C, rental_stock_C, stock_demand_rental_NC, rental_stock_NC=sim.excess_demand_continuous(False, initialise, grids, par,0, mMarkov, dPi_L, par.iNj, mDist1_c, mDist1_nc, mDist1_renter, dP_C, dP_NC,  vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,],  b_stay_nc[0,], b_renter[0,], rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq,vCoeff_C_initial,vCoeff_NC_initial,vCoeff_C_initial[0],vCoeff_NC_initial[0])
     print(net_demand_C,coastal_beq)
     print(net_demand_NC,noncoastal_beq)
     print(stock_demand_rental_C, rental_stock_C)
@@ -566,8 +723,8 @@ def main():
     
 
 
-
-    """
+   
+ 
  
     #func='initialise'    
     #excess_demand_C_stock, excess_demand_NC_stock, net_demand_C, net_demand_NC, investment_C, investment_NC, stock_demand_rental, rental_stock=sim.excess_demand_continuous(func, grids, par,0, mMarkov, dPi_L, iNj, mDist1_c, mDist1_nc, mDist1_renter, dP_C, dP_NC,  vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,],  b_stay_nc[0,], b_renter[0,], rental_stock, coastal_beq, noncoastal_beq, savings_beq,vCoeff_C,vCoeff_NC)
@@ -822,7 +979,8 @@ def main():
     #t1 = time.time()
     #print("computation time without parallelisation is", t1- t0)
     #print(iteration)
-  
+    """
+    """
     plt.plot(grids.vM, b_stay_c[14, 0, 0, 0,:,1,0,0, 0, 0, 0, 0],  label='coastal, L = 0, H = 1, no flood')
     plt.title( 'b prime, J = -5')
     plt.xlabel('Cash in hand')

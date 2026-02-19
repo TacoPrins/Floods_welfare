@@ -28,12 +28,13 @@ def flatten_third_dim(mat):
     return out
 
 @njit
-def generate_pricepath(dataset, grids, sceptics, par, func, mMarkov, dPi_L, vCoeff_in_C,vCoeff_in_NC, mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, method):
+def generate_pricepath(dataset, grids, sceptics, par, func, mMarkov, dPi_L, vCoeff_in_C,vCoeff_in_NC, vCoeff_C_initial, vCoeff_NC_initial, mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, method):
     #mc_time=0 
     #dist_time=0     
    
-    vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, _, _, _ = household_problem.solve(grids, par, dPi_L, par.iNj, mMarkov,vCoeff_in_C,vCoeff_in_NC)
-
+    vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = household_problem.solve(grids, par, dPi_L, par.iNj, mMarkov,vCoeff_in_C,vCoeff_in_NC)
+    dP_C_lag=vCoeff_C_initial[0]
+    dP_NC_lag=vCoeff_NC_initial[0]
         
     for t_index in range(grids.vTime.size):  
 
@@ -53,7 +54,15 @@ def generate_pricepath(dataset, grids, sceptics, par, func, mMarkov, dPi_L, vCoe
         bound_nc_r_bis=guess_nc+0.1            
         
         #start=time.perf_counter()
-        dataset[t_index,0], dataset[t_index,1], it, succes = house_prices_algorithm(sceptics, func, method, grids, par, guess_c, guess_nc, bound_c_l, bound_nc_l, bound_c_l_bis, bound_nc_l_bis, bound_c_r_bis, bound_nc_r_bis, mMarkov, dPi_L, par.iNj,  mDist0_c, mDist0_nc, mDist0_renter, vt_stay_c,  vt_stay_nc, vt_renter, b_stay_c,b_stay_nc,  b_renter, t_index, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, vCoeff_in_C, vCoeff_in_NC)
+        
+        #print("Coastal bequest in:",coastal_beq0)
+        #print("Noncoastal bequest in:",noncoastal_beq0)
+        #print("Savings bequest in:", savings_beq0)
+        #print("Coastal owner sum in:", np.sum(mDist0_c))
+        #print("Noncoastal owner sum in:", np.sum(mDist0_nc))
+        #print("Renter sum in:",np.sum(mDist0_renter))
+        
+        dataset[t_index,0], dataset[t_index,1], it, succes = house_prices_algorithm(sceptics, func, method, grids, par, guess_c, guess_nc, bound_c_l, bound_nc_l, bound_c_l_bis, bound_nc_l_bis, bound_c_r_bis, bound_nc_r_bis, mMarkov, dPi_L, par.iNj,  mDist0_c, mDist0_nc, mDist0_renter, vt_stay_c,  vt_stay_nc, vt_renter, b_stay_c,b_stay_nc,  b_renter, t_index, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, vCoeff_in_C, vCoeff_in_NC, dP_C_lag, dP_NC_lag)
         #end=time.perf_counter()                                        
         #print("MC time",end-start)
        # mc_time+=end-start
@@ -62,7 +71,9 @@ def generate_pricepath(dataset, grids, sceptics, par, func, mMarkov, dPi_L, vCoe
         print("Time step:",t_index)
         if t_index<grids.vTime.size-1:
             #start=time.perf_counter()
-            mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C1, stock_demand_rental_NC1, coastal_beq1, noncoastal_beq1, savings_beq1, _ = sim.update_dist_continuous(sceptics, False, 0, func, grids, par, t_index, mMarkov, dPi_L, par.iNj, mDist0_c, mDist0_nc, mDist0_renter, dataset[t_index,0], dataset[t_index,1], vt_stay_c[t_index,], vt_stay_nc[t_index,],  vt_renter[t_index,], b_stay_c[t_index,], b_stay_nc[t_index,], b_renter[t_index,],  coastal_beq0, noncoastal_beq0, savings_beq0,vCoeff_in_C,vCoeff_in_NC)
+            mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C1, stock_demand_rental_NC1, coastal_beq1, noncoastal_beq1, savings_beq1, _ = sim.update_dist_continuous(sceptics, False, 0, func, grids, par, t_index, mMarkov, dPi_L, par.iNj, mDist0_c, mDist0_nc, mDist0_renter, dataset[t_index,0], dataset[t_index,1], vt_stay_c[t_index,], vt_stay_nc[t_index,],  vt_renter[t_index,], b_stay_c[t_index,], b_stay_nc[t_index,], b_renter[t_index,],  coastal_beq0, noncoastal_beq0, savings_beq0,vCoeff_in_C,vCoeff_in_NC, dP_C_lag, dP_NC_lag)
+            dP_C_lag=dataset[t_index,0]
+            dP_NC_lag=dataset[t_index,1]
             #end=time.perf_counter() 
             #print("dist time",end-start)
            # dist_time+=end-start
@@ -78,17 +89,17 @@ def generate_pricepath(dataset, grids, sceptics, par, func, mMarkov, dPi_L, vCoe
             savings_beq0 = (savings_beq1)
     
     
-    return dataset
+    return dataset, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf
     
         
 @njit
-def find_coefficients(par, grids, method, sceptics, dPi_L, iNj, mMarkov, vCoeff_C, vCoeff_NC,mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0):
+def find_coefficients(par, grids, method, sceptics, dPi_L, iNj, mMarkov, vCoeff_C, vCoeff_NC,vCoeff_C_initial, vCoeff_NC_initial,mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0):
   
     max_it=15
     iteration =0   
 
     
-    func=True
+    func=False
 
     for it in range(0, max_it):
         
@@ -100,7 +111,7 @@ def find_coefficients(par, grids, method, sceptics, dPi_L, iNj, mMarkov, vCoeff_
         # given value functions, find no flooding stationary distribution given initial alpha
         iT = grids.vTime.size
         datasets_outer = np.zeros((iT, 2), dtype = np.float64)
-        datasets_outer[:,:]=generate_pricepath(datasets_outer[:,:], grids, sceptics, par, func, mMarkov, dPi_L, iNj, vCoeff_in_C,vCoeff_in_NC, mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, iT,method)
+        datasets_outer[:,:], vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf =generate_pricepath(datasets_outer[:,:], grids, sceptics, par, func, mMarkov, dPi_L, vCoeff_in_C,vCoeff_in_NC, vCoeff_C_initial, vCoeff_NC_initial, mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, method)
               
         vCoeff_C, vCoeff_NC, rho, dP_C_vec, dP_NC_vec=coeff_updater(par, grids, datasets_outer, vCoeff_in_C, vCoeff_in_NC, iT)
                 
@@ -122,7 +133,7 @@ def find_coefficients(par, grids, method, sceptics, dPi_L, iNj, mMarkov, vCoeff_
             break       
 
         
-    return dP_C_vec, dP_NC_vec, vCoeff_C, vCoeff_NC, iteration#, mc_time, dist_time
+    return dP_C_vec, dP_NC_vec, vCoeff_C, vCoeff_NC, iteration, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf#, mc_time, dist_time
 
 
 
@@ -187,7 +198,10 @@ def initialise_coefficients_initial(par, grids, method, dPi_L, iNj, mMarkov, vCo
         bequest_guess[1]=noncoastal_beq
         bequest_guess[2]=savings_beq
         
-        dP_C_guess, dP_NC_guess, _, success = house_prices_algorithm(False, func, method, grids, par, guess_c, guess_nc, bound_c_l, bound_nc_l, bound_c_l_bis, bound_nc_l_bis, bound_c_r_bis, bound_nc_r_bis, mMarkov, dPi_L, iNj,  mDist1_c, mDist1_nc, mDist1_renter, vt_stay_c,  vt_stay_nc, vt_renter, b_stay_c,b_stay_nc,  b_renter, 0, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, vCoeff_in_C_initial,vCoeff_in_NC_initial)
+        
+        dP_C_lag=dP_C_lom
+        dP_NC_lag=dP_NC_lom
+        dP_C_guess, dP_NC_guess, _, success = house_prices_algorithm(False, func, method, grids, par, guess_c, guess_nc, bound_c_l, bound_nc_l, bound_c_l_bis, bound_nc_l_bis, bound_c_r_bis, bound_nc_r_bis, mMarkov, dPi_L, iNj,  mDist1_c, mDist1_nc, mDist1_renter, vt_stay_c,  vt_stay_nc, vt_renter, b_stay_c,b_stay_nc,  b_renter, 0, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, vCoeff_in_C_initial,vCoeff_in_NC_initial, dP_C_lag, dP_NC_lag)
                                                 
         print('price C mc',dP_C_guess)
         print('price NC mc',dP_NC_guess)
@@ -227,7 +241,7 @@ def initialise_coefficients_initial(par, grids, method, dPi_L, iNj, mMarkov, vCo
 @njit
 def precompute_market_data(sceptics, func, grids, par, mMarkov, dPi_L, iNj, mDist1_c, mDist1_nc, mDist1_renter, 
                           vt_stay_c, vt_stay_nc,  vt_renter,b_stay_c, b_stay_nc,  b_renter, t_index, 
-                          rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, vCoeff_in_C, vCoeff_in_NC):
+                          rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, vCoeff_in_C, vCoeff_in_NC, dP_C_lag, dP_NC_lag):
     """
     Pre-compute market data that doesn't change during price iteration.
     This avoids redundant calculations in the inner loop.
@@ -262,6 +276,8 @@ def precompute_market_data(sceptics, func, grids, par, mMarkov, dPi_L, iNj, mDis
         'savings_beq': savings_beq,
         'vCoeff_in_C': vCoeff_in_C,
         'vCoeff_in_NC': vCoeff_in_NC,
+         'dP_C_lag': dP_C_lag, 
+         'dP_NC_lag': dP_NC_lag
     }
     
     return market_data
@@ -283,7 +299,7 @@ def compute_excess_demand_pair(dP_C, dP_NC, market_data):
         market_data['b_stay_c'][market_data['t_index'],], market_data['b_stay_nc'][market_data['t_index'],], market_data['b_renter'][market_data['t_index'],], 
         market_data['rental_stock_C'], market_data['rental_stock_NC'], market_data['coastal_beq'], 
         market_data['noncoastal_beq'], market_data['savings_beq'],
-        market_data['vCoeff_in_C'], market_data['vCoeff_in_NC']
+        market_data['vCoeff_in_C'], market_data['vCoeff_in_NC'], market_data['dP_C_lag'], market_data['dP_NC_lag']
     )
     
     return excess_demand_C, excess_demand_NC
@@ -449,12 +465,12 @@ def check_convergence(dP_C, dP_NC, dP_C_prev, dP_NC_prev, excess_C, excess_NC,
     return price_converged and error_converged, price_dist, error
 
 @njit
-def house_prices_algorithm(sceptics, func, method, grids, par, guess_c, guess_nc, bound_c_l, bound_nc_l, bound_c_l_bis, bound_nc_l_bis, bound_c_r_bis, bound_nc_r_bis, mMarkov, dPi_L, iNj,  mDist1_c, mDist1_nc, mDist1_renter, vt_stay_c,  vt_stay_nc, vt_renter, b_stay_c,b_stay_nc,  b_renter, t_index, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, vCoeff_in_C, vCoeff_in_NC):
+def house_prices_algorithm(sceptics, func, method, grids, par, guess_c, guess_nc, bound_c_l, bound_nc_l, bound_c_l_bis, bound_nc_l_bis, bound_c_r_bis, bound_nc_r_bis, mMarkov, dPi_L, iNj,  mDist1_c, mDist1_nc, mDist1_renter, vt_stay_c,  vt_stay_nc, vt_renter, b_stay_c,b_stay_nc,  b_renter, t_index, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, vCoeff_in_C, vCoeff_in_NC, dP_C_lag, dP_NC_lag):
      
     # Pre-compute market data that doesn't change during iteration
     market_data = precompute_market_data(sceptics, func, grids, par, mMarkov, dPi_L, iNj, mDist1_c, mDist1_nc, mDist1_renter, 
                                   vt_stay_c, vt_stay_nc,  vt_renter,b_stay_c, b_stay_nc,  b_renter, t_index, 
-                                  rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, vCoeff_in_C, vCoeff_in_NC)
+                                  rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, vCoeff_in_C, vCoeff_in_NC, dP_C_lag, dP_NC_lag)
     
     # Initialize
     dP_C = guess_c

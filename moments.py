@@ -346,7 +346,7 @@ def end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDi
     
     #Calculate net worth of subgroups
     total_NW_HO_C=np.dot(mNet_worth_c_flat,dens_mhl_c_all_ages_flat)/HO_C_share
-    total_NW_HO_NC=np.dot(mNet_worth_c_flat,dens_mhl_nc_all_ages_flat)/HO_NC_share
+    total_NW_HO_NC=np.dot(mNet_worth_nc_flat,dens_mhl_nc_all_ages_flat)/HO_NC_share
     total_NW_R=np.dot(vNet_worth_r,dens_m_r_all_ages)/(R_C_share+R_NC_share)
     
     total_NW_HO=(total_NW_HO_C*HO_C_share+total_NW_HO_NC*HO_NC_share)/(HO_C_share+HO_NC_share)

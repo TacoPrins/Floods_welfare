@@ -39,7 +39,7 @@ def create(par):
     vPDF_z= np.array([1, 0.4, 0.4, 0.2])
 
 
-    vL_sim=np.linspace(0, 1.05, 30)
+    vL_sim=np.linspace(0, 1.5, 35)
     #vH=  np.array([1.50, 1.92, 2.46, 3.15, 4.03, 5.15])
     vH=np.linspace(1.50,par.h_max,3)
     vH_renter=np.array([1.17, 1.92])
@@ -118,7 +118,7 @@ def create(par):
                   'vM_sim':vM_sim,
                   "vK": np.array([0,1]), # 0 is realist, 1 is optimist,
                   'vG': np.linspace(par.dXi_min, par.dXi_max, par.iXin),
-                  'vL': np.linspace(0, 1.05, 20),
+                  'vL': np.linspace(0, 1.3, 20),
                   'vL_sim': vL_sim,
                   'vE': vE,
                   'vE_trans': vE_trans, 
