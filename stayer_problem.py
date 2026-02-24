@@ -28,7 +28,7 @@ def solve(par, grids, j_index, k_index, g_index, mW_next, mQ_next, mW_next_wf, w
     
     for h_index in range(grids.vH.size): 
         h=grids.vH[h_index]
-        vU_c_nodes=ut.u_c(j,vC_nodes,h,g*par.dOmega, par)
+        vU_c_nodes=ut.u_c(j,vC_nodes,h,g+par.dOmega, par)
         for l_index in range(grids.vL.size):   
        
             vM_endog=np.zeros((vB_grid.size))
@@ -55,38 +55,38 @@ def solve(par, grids, j_index, k_index, g_index, mW_next, mQ_next, mW_next_wf, w
             for m_index in range(vM_grid.size):
                 if vM_grid[m_index]<=vM_endog[0]:
                     mC_pol[m_index,h_index,l_index]=vM_grid[m_index]
-                    mVt[m_index,h_index,l_index]=-1/(ut.u(j,mC_pol[m_index,h_index,l_index],h,g*par.dOmega, par)+mW_next[0,h_index, l_index])
-                    mQt[m_index,h_index,l_index]=-1/ut.u_c(j,mC_pol[m_index,h_index,l_index],h,g*par.dOmega, par)      
+                    mVt[m_index,h_index,l_index]=-1/(ut.u(j,mC_pol[m_index,h_index,l_index],h,g+par.dOmega, par)+mW_next[0,h_index, l_index])
+                    mQt[m_index,h_index,l_index]=-1/ut.u_c(j,mC_pol[m_index,h_index,l_index],h,g+par.dOmega, par)      
                     mB_pol[m_index,h_index,l_index]=vB_grid[0]
                     if k_index == 1 and welfare == True:
-                        mVt_wf[m_index,h_index,l_index] = -1/(ut.u(j,mC_pol[m_index,h_index,l_index],h,g*par.dOmega, par)+mW_next_wf[0,h_index, l_index])
+                        mVt_wf[m_index,h_index,l_index] = -1/(ut.u(j,mC_pol[m_index,h_index,l_index],h,g+par.dOmega, par)+mW_next_wf[0,h_index, l_index])
                 
             # upper envelope due to value function not being concave (FOC not sufficient, only necessary)
             for b_prime_index in range(grids.vB.size-1):
                 for m_index in range(grids.vM.size):
                     if ((vM_endog[b_prime_index]<grids.vM[m_index]) and (grids.vM[m_index]<=vM_endog[b_prime_index+1])) or ((vM_endog[b_prime_index]>=grids.vM[m_index]) and (grids.vM[m_index]>vM_endog[b_prime_index+1])):
                        C_candidate=vC_endog[b_prime_index]+(vC_endog[b_prime_index+1]-vC_endog[b_prime_index])/(vM_endog[b_prime_index+1]-vM_endog[b_prime_index])*(grids.vM[m_index]-vM_endog[b_prime_index])
-                       Vt_candidate=-1/(ut.u(j,C_candidate,h,g*par.dOmega, par)+mW_next[b_prime_index,h_index, l_index]+(mW_next[b_prime_index+1,h_index, l_index]-mW_next[b_prime_index,h_index, l_index])/(grids.vB[b_prime_index+1]-grids.vB[b_prime_index])*((grids.vM[m_index]-C_candidate)-grids.vB[b_prime_index]))
+                       Vt_candidate=-1/(ut.u(j,C_candidate,h,g+par.dOmega, par)+mW_next[b_prime_index,h_index, l_index]+(mW_next[b_prime_index+1,h_index, l_index]-mW_next[b_prime_index,h_index, l_index])/(grids.vB[b_prime_index+1]-grids.vB[b_prime_index])*((grids.vM[m_index]-C_candidate)-grids.vB[b_prime_index]))
                        if (Vt_candidate>mVt[m_index,h_index,l_index]) or (np.isnan(mVt[m_index,h_index,l_index])):
                            mVt[m_index,h_index,l_index]=Vt_candidate
                            mC_pol[m_index,h_index,l_index]=C_candidate
-                           mQt[m_index,h_index,l_index]=-1/ut.u_c(j,mC_pol[m_index,h_index,l_index],h,g*par.dOmega, par)
+                           mQt[m_index,h_index,l_index]=-1/ut.u_c(j,mC_pol[m_index,h_index,l_index],h,g+par.dOmega, par)
                            mB_pol[m_index,h_index,l_index]=grids.vM[m_index]-mC_pol[m_index,h_index,l_index]
                            if k_index == 1 and welfare == True:
-                               mVt_wf[m_index,h_index,l_index] =-1/(ut.u(j,C_candidate,h,g*par.dOmega, par)+mW_next_wf[b_prime_index,h_index, l_index]+(mW_next_wf[b_prime_index+1,h_index, l_index]-mW_next_wf[b_prime_index,h_index, l_index])/(grids.vB[b_prime_index+1]-grids.vB[b_prime_index])*((grids.vM[m_index]-C_candidate)-grids.vB[b_prime_index]))
+                               mVt_wf[m_index,h_index,l_index] =-1/(ut.u(j,C_candidate,h,g+par.dOmega, par)+mW_next_wf[b_prime_index,h_index, l_index]+(mW_next_wf[b_prime_index+1,h_index, l_index]-mW_next_wf[b_prime_index,h_index, l_index])/(grids.vB[b_prime_index+1]-grids.vB[b_prime_index])*((grids.vM[m_index]-C_candidate)-grids.vB[b_prime_index]))
             
             # handle corner case properly (no extrapolation)
             for m_index in range(grids.vM.size):                
                 if (grids.vM[m_index]>vM_endog_max):
                    C_candidate=grids.vM[m_index]-grids.vB[vM_endog_max_index]
-                   Vt_candidate=-1/(ut.u(j,C_candidate,h,g*par.dOmega, par)+mW_next[vM_endog_max_index,h_index, l_index])
+                   Vt_candidate=-1/(ut.u(j,C_candidate,h,g+par.dOmega, par)+mW_next[vM_endog_max_index,h_index, l_index])
                    if (Vt_candidate>mVt[m_index,h_index,l_index]) or (np.isnan(mVt[m_index,h_index,l_index])):
                        mVt[m_index,h_index,l_index]=Vt_candidate
                        mC_pol[m_index,h_index,l_index]=C_candidate
-                       mQt[m_index,h_index,l_index]=-1/ut.u_c(j,mC_pol[m_index,h_index,l_index],h,g*par.dOmega, par)
+                       mQt[m_index,h_index,l_index]=-1/ut.u_c(j,mC_pol[m_index,h_index,l_index],h,g+par.dOmega, par)
                        mB_pol[m_index,h_index,l_index]=grids.vB[vM_endog_max_index]
                        if k_index == 1 and welfare == True:
-                           mVt_wf[m_index,h_index,l_index] = -1/(ut.u(j,C_candidate,h,g*par.dOmega, par)+mW_next_wf[vM_endog_max_index,h_index, l_index])
+                           mVt_wf[m_index,h_index,l_index] = -1/(ut.u(j,C_candidate,h,g+par.dOmega, par)+mW_next_wf[vM_endog_max_index,h_index, l_index])
                     
 
     assert np.all(mC_pol>0)  
