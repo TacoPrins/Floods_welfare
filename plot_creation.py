@@ -10,17 +10,16 @@ def main():
     # import parameters
     vCoeff_C_initial=np.array([0.72414899, 0.,         0.,         0.,         0.        ])
     vCoeff_NC_initial=np.array([0.76734488, 0.,         0.,         0.,         0.        ])
-    vCoeff_C=np.array([ 0.66131548, -0.05658024,  0.00335141,  0.00720003,  0.00200794])
-    vCoeff_NC=np.array([ 8.12788151e-01,  3.63663858e-02, -3.01088988e-03, -4.55020052e-03,
+    vCoeff_C_RE=np.array([ 0.66131548, -0.05658024,  0.00335141,  0.00720003,  0.00200794])
+    vCoeff_NC_RE=np.array([ 8.12788151e-01,  3.63663858e-02, -3.01088988e-03, -4.55020052e-03,
      -2.91834972e-04])
     dP_C_end=0.61663945 
     dP_NC_end=0.8442203 
     
     
-    vCoeff_C_RE=np.array([  0.72392258, -4.94257772e-02,  7.59725397e-03,  3.70388122e-04,
-      1.22941422e-03])
-    vCoeff_NC_RE=np.array([ 0.76693964,  1.84034581e-02, -2.53439884e-03, -6.67967002e-04,
-      3.73928643e-04])
+    vCoeff_C=np.array([ 0.68326758, -0.04020328, -0.00154051, 0.00402462, 0.00153142])
+    vCoeff_NC=np.array([ 7.98521250e-01, 2.38076699e-02, -1.65203993e-03, -1.06683524e-03,
+      2.97454569e-04])
     par = misc.construct_jitclass(parfile.par_dict)
     mMarkov, vE = tauch.tauchen(par.dRho, par.dSigmaeps, par.iNumStates, par.iM, par.time_increment)
     grids, mMarkov=grid_creation.create(par)
@@ -29,15 +28,31 @@ def main():
     plt.figure(figsize=(9, 5))
     
     # Compute trajectories
-    yC = lom.LoM_C(grids, grids.vTime, vCoeff_C)
-    yNC = lom.LoM_NC(grids, grids.vTime, vCoeff_NC)
+    yC_RE = lom.LoM_C(grids, grids.vTime, vCoeff_C_RE)
+    yNC_RE = lom.LoM_NC(grids, grids.vTime, vCoeff_NC_RE)
+    
+    yC_HE = lom.LoM_C(grids, grids.vTime, vCoeff_C)
+    yNC_HE = lom.LoM_NC(grids, grids.vTime, vCoeff_NC)
     
     # Rescale time: t=0 -> 1998, step=2 years
     years = 1998 + 2 * grids.vTime
     
     # Plot
-    lineC, = plt.plot(years, yC, label='Coastal price trajectory', linewidth=2)
-    lineNC, = plt.plot(years, yNC, label='Inland price trajectory', linewidth=2)
+    lineC, = plt.plot(years, yC_RE, label='Coastal price trajectory, RE', linewidth=2)
+    lineNC, = plt.plot(years, yNC_RE, label='Inland price trajectory, RE', linewidth=2)
+    
+    
+    plt.plot(years, yC_HE,
+         linestyle=':',
+         linewidth=2,
+         color=lineC.get_color(),
+         label='Coastal price trajectory, HE')
+
+    plt.plot(years, yNC_HE,
+         linestyle=':',
+         linewidth=2,
+         color=lineNC.get_color(),
+         label='Inland price trajectory, HE')
     
     # Initial points
     x0_year = 1998
@@ -88,8 +103,8 @@ def main():
                  ha='right', fontsize=9)
     
     # Dotted guide lines
-    plt.vlines(x0_year, y_coastal, yC[0], linestyles='dotted', linewidth=1)
-    plt.vlines(x0_year, y_inland, yNC[0], linestyles='dotted', linewidth=1)
+    plt.vlines(x0_year, y_coastal, yC_RE[0], linestyles='dotted', linewidth=1)
+    plt.vlines(x0_year, y_inland, yNC_RE[0], linestyles='dotted', linewidth=1)
     
     # Axis ticks: start at 2000, every 4 years for readability
     start_year = 2000

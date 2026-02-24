@@ -6,12 +6,12 @@ import simulation as sim
 from numba import njit
 
 @njit
-def welfare_calculator_initial(method, par, grids, dPi_L, iNj, mMarkov, vCoeff_C, vCoeff_NC, vCoeff_C_RE, vCoeff_NC_RE, vCoeff_C_initial,vCoeff_NC_initial, max_ltv):
+def welfare_calculator_initial(method, par, grids, dPi_L, iNj, mMarkov, vCoeff_C_initial,vCoeff_NC_initial, max_ltv):
     
     #Begin with initial steady state with constant flood risk
    
     vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter = household_problem.solve_initial(grids, par, dPi_L, iNj, mMarkov, vCoeff_C_initial[0],vCoeff_NC_initial[0])
-    mDist1_c, mDist1_nc, mDist1_renter, rental_stock0, coastal_beq0, noncoastal_beq0, savings_beq0 = sim.stat_dist_finder(False, grids, par, mMarkov, dPi_L, iNj, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vCoeff_C_initial,vCoeff_NC_initial)
+    mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C0, rental_stock_NC0,  coastal_beq0, noncoastal_beq0, savings_beq0, vcoastal_beq, vnoncoastal_beq, vsavings_beq, no_beq = sim.stat_dist_finder(False, grids, par, mMarkov, dPi_L, iNj, vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,], b_stay_nc[0,], b_renter[0,], vCoeff_C_initial,vCoeff_NC_initial, np.zeros((3)))
     
     vt_stay_c_expanded=grid_adjust_initial(grids,iNj,vt_stay_c)
     vt_stay_nc_expanded=grid_adjust_initial(grids,iNj,vt_stay_nc)
