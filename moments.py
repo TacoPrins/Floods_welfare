@@ -45,7 +45,7 @@ def calc_moments(par, grids, t_index, mDist_c, mDist_nc,mDist_renter, dPi_S, dPi
        mDist_renter_NC=mDist_renter 
     
     #homeownership shares
-    HO_C_share, HO_NC_share, R_C_share, R_NC_share = homeowner_renter_shares(grids, g_indiff, mDist_c, mDist_nc,mDist_renter_C,mDist_renter_NC)
+    HO_C_share, HO_NC_share, R_C_share, R_NC_share, HO_C_share_before35, HO_NC_share_before35, HO_C_share_death, HO_NC_share_death = homeowner_renter_shares(grids, g_indiff, mDist_c, mDist_nc,mDist_renter_C,mDist_renter_NC)
     
     """
     (k0g0_HO_C_share, k0g0_HO_NC_share, k0g0_R_C_share, k0g0_R_NC_share,
@@ -57,7 +57,7 @@ def calc_moments(par, grids, t_index, mDist_c, mDist_nc,mDist_renter, dPi_S, dPi
     """
     # NW Dynamics 
     #agg_NW, NW_HO_C, NW_HO_NC, NW_R_C, NW_R_NC, NW_HO, NW_R  = aggregate_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDist_renter_NC, HO_C_share, HO_NC_share, R_C_share, R_NC_share)
-    total_NW_HO_C, total_NW_HO_NC, total_NW_R, total_NW_HO, total_NW_age_15, total_NW_age_27, total_NW_all_ages, median_NW_age_15, median_NW_age_27, median_NW_all_ages, thirtythree_percentile_NW_age_27, sixtyseven_percentile_NW_age_27, tenth_percentile_housing, median_housing, ninetieth_percentile_housing, cumdens_housing_all_ages, NW_housing_share_sorted    = end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDist_renter_NC,HO_C_share, HO_NC_share, R_C_share, R_NC_share)
+    total_NW_HO_C, total_NW_HO_NC, total_NW_R, total_NW_HO, total_NW_age_15, total_NW_age_27, total_NW_all_ages, median_NW_age_15, median_NW_age_27, median_NW_all_ages, thirtythree_percentile_NW_age_27, sixtyseven_percentile_NW_age_27, thirtythree_percentile_NW_age_30, sixtyseven_percentile_NW_age_30, tenth_percentile_housing, median_housing, ninetieth_percentile_housing, cumdens_housing_all_ages, NW_housing_share_sorted  = end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDist_renter_NC,HO_C_share, HO_NC_share, R_C_share, R_NC_share)
     
     """
     moments = {
@@ -115,7 +115,7 @@ def calc_moments(par, grids, t_index, mDist_c, mDist_nc,mDist_renter, dPi_S, dPi
     'k1g2_R_NC_share': k1g2_R_NC_share,
     """
     
-    return HO_C_share, HO_NC_share, R_C_share, R_NC_share, total_NW_HO_C, total_NW_HO_NC, total_NW_R, total_NW_HO, total_NW_age_15, total_NW_age_27, total_NW_all_ages, median_NW_age_15, median_NW_age_27, median_NW_all_ages, thirtythree_percentile_NW_age_27, sixtyseven_percentile_NW_age_27, tenth_percentile_housing, median_housing, ninetieth_percentile_housing, cumdens_housing_all_ages, NW_housing_share_sorted  
+    return HO_C_share, HO_NC_share, R_C_share, R_NC_share, HO_C_share_before35, HO_NC_share_before35, HO_C_share_death, HO_NC_share_death, total_NW_HO_C, total_NW_HO_NC, total_NW_R, total_NW_HO, total_NW_age_15, total_NW_age_27, total_NW_all_ages, median_NW_age_15, median_NW_age_27, median_NW_all_ages, thirtythree_percentile_NW_age_27, sixtyseven_percentile_NW_age_27, thirtythree_percentile_NW_age_30, sixtyseven_percentile_NW_age_30, tenth_percentile_housing, median_housing, ninetieth_percentile_housing, cumdens_housing_all_ages, NW_housing_share_sorted  
 @njit
 def homeowner_renter_shares(grids, g_indiff, mDist_c, mDist_nc,mDist_renter_C,mDist_renter_NC):
     """
@@ -130,7 +130,17 @@ def homeowner_renter_shares(grids, g_indiff, mDist_c, mDist_nc,mDist_renter_C,mD
     R_C_share = renters_coastal_share*renters_total
     R_NC_share =(1-renters_coastal_share)*renters_total
     
-    return HO_C_share, HO_NC_share, R_C_share, R_NC_share
+    HO_C_share_before35 = np.sum(mDist_c[:7,])/(7/mDist_c.shape[0])
+    HO_NC_share_before35 = np.sum(mDist_nc[:7,])/(7/mDist_c.shape[0])
+    
+    HO_C_share_death = np.sum(mDist_c[-1,])/(1/mDist_c.shape[0])
+    HO_NC_share_death = np.sum(mDist_nc[-1,])/(1/mDist_c.shape[0]) # or equivalently * 30 for equal sized cohorts.
+    
+    # for j in range(30):
+        # print('sum of coastal homeowners in age:',j, 'is', np.sum(mDist_c[j,]))
+        # print('sum of inland homeowners in age:',j, 'is', np.sum(mDist_nc[j,]))
+    
+    return HO_C_share, HO_NC_share, R_C_share, R_NC_share, HO_C_share_before35, HO_NC_share_before35, HO_C_share_death, HO_NC_share_death
 
 """
 @njit
@@ -255,6 +265,9 @@ def end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDi
     dens_mhl_c_age_15 = np.zeros((M, H, L))
     dens_mhl_nc_age_15 = np.zeros((M, H, L))
     dens_m_r_age_15 = np.zeros((grids.vX_sim.size))
+    dens_mhl_c_age_30 = np.zeros((M, H, L))
+    dens_mhl_nc_age_30 = np.zeros((M, H, L))
+    dens_m_r_age_30 = np.zeros((grids.vX_sim.size))
     dens_mhl_c_all_ages = np.zeros((M, H, L))
     dens_mhl_nc_all_ages = np.zeros((M, H, L))
     dens_m_r_all_ages = np.zeros((grids.vX_sim.size))
@@ -285,6 +298,8 @@ def end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDi
                 acc_nc_age_27 = 0.0
                 acc_c_age_15 = 0.0
                 acc_nc_age_15 = 0.0
+                acc_c_age_30 = 0.0
+                acc_nc_age_30 = 0.0
                 acc_c_all_ages = 0.0
                 acc_nc_all_ages = 0.0
                 for k_index in range(K):
@@ -294,6 +309,8 @@ def end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDi
                             acc_nc_age_27 += mDist_nc[27, k_index, g_index, m_index_sim, h_index, l_index_sim, e_index]
                             acc_c_age_15 += mDist_c[15, k_index, g_index, m_index_sim, h_index, l_index_sim, e_index]
                             acc_nc_age_15 += mDist_nc[15, k_index, g_index, m_index_sim, h_index, l_index_sim, e_index]
+                            acc_c_age_30 += mDist_c[-1, k_index, g_index, m_index_sim, h_index, l_index_sim, e_index]
+                            acc_nc_age_30 += mDist_nc[-1, k_index, g_index, m_index_sim, h_index, l_index_sim, e_index]
                             for j_index in range(J):                            
                                 acc_c_all_ages += mDist_c[j_index, k_index, g_index, m_index_sim, h_index, l_index_sim, e_index]
                                 acc_nc_all_ages += mDist_nc[j_index, k_index, g_index, m_index_sim, h_index, l_index_sim, e_index]
@@ -301,6 +318,8 @@ def end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDi
                 dens_mhl_nc_age_27[m_index_sim, h_index, l_index_sim] = acc_nc_age_27
                 dens_mhl_c_age_15[m_index_sim, h_index, l_index_sim] = acc_c_age_15
                 dens_mhl_nc_age_15[m_index_sim, h_index, l_index_sim] = acc_nc_age_15
+                dens_mhl_c_age_30[m_index_sim, h_index, l_index_sim] = acc_c_age_30
+                dens_mhl_nc_age_30[m_index_sim, h_index, l_index_sim] = acc_nc_age_30
                 dens_mhl_c_all_ages[m_index_sim, h_index, l_index_sim] = acc_c_all_ages
                 dens_mhl_nc_all_ages[m_index_sim, h_index, l_index_sim] = acc_nc_all_ages
     # renters            
@@ -308,6 +327,7 @@ def end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDi
     for x_index_sim in range(grids.vX_sim.size):
         acc_r_age_27 = 0.0
         acc_r_age_15 = 0.0
+        acc_r_age_30 = 0.0
         acc_r_all_ages = 0.0
         for k_index in range(K):
             for g_index in range(G):
@@ -315,21 +335,25 @@ def end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDi
                     if R_C_share>0 and R_NC_share>0:
                         acc_r_age_27 += mDist_renter_C[27, k_index, g_index, x_index_sim, e_index]+mDist_renter_NC[27, k_index, g_index, x_index_sim, e_index]
                         acc_r_age_15 += mDist_renter_C[15, k_index, g_index, x_index_sim, e_index]+mDist_renter_NC[15, k_index, g_index, x_index_sim, e_index]
+                        acc_r_age_30 += mDist_renter_C[-1, k_index, g_index, x_index_sim, e_index]+mDist_renter_NC[-1, k_index, g_index, x_index_sim, e_index]
                         for j_index in range(J):
                             acc_r_all_ages += mDist_renter_C[j_index, k_index, g_index, x_index_sim, e_index]+mDist_renter_NC[j_index, k_index, g_index, x_index_sim, e_index]
                     elif R_C_share>0: 
                         acc_r_age_27 += mDist_renter_C[27, k_index, g_index, x_index_sim, e_index]
                         acc_r_age_15 += mDist_renter_C[15, k_index, g_index, x_index_sim, e_index]
+                        acc_r_age_30 += mDist_renter_C[-1, k_index, g_index, x_index_sim, e_index]
                         for j_index in range(J):
                             acc_r_all_ages += mDist_renter_C[j_index, k_index, g_index, x_index_sim, e_index]
                     elif R_NC_share>0:
                         acc_r_age_27 += mDist_renter_NC[27, k_index, g_index, x_index_sim, e_index]
                         acc_r_age_15 += mDist_renter_NC[15, k_index, g_index, x_index_sim, e_index]
+                        acc_r_age_30 += mDist_renter_NC[-1, k_index, g_index, x_index_sim, e_index]
                         for j_index in range(J):
                             acc_r_all_ages += mDist_renter_NC[j_index, k_index, g_index, x_index_sim, e_index]
 
         dens_m_r_age_27[x_index_sim] = acc_r_age_27
         dens_m_r_age_15[x_index_sim] = acc_r_age_15
+        dens_m_r_age_30[x_index_sim] = acc_r_age_30
         dens_m_r_all_ages[x_index_sim] = acc_r_all_ages
     
     # Flatten ownership NW matrices and all densities
@@ -341,6 +365,8 @@ def end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDi
     dens_mhl_nc_age_27_flat = dens_mhl_nc_age_27.flatten()
     dens_mhl_c_age_15_flat = dens_mhl_c_age_15.flatten()
     dens_mhl_nc_age_15_flat = dens_mhl_nc_age_15.flatten()
+    dens_mhl_c_age_30_flat = dens_mhl_c_age_30.flatten()
+    dens_mhl_nc_age_30_flat = dens_mhl_nc_age_30.flatten()
     dens_mhl_c_all_ages_flat = dens_mhl_c_all_ages.flatten()
     dens_mhl_nc_all_ages_flat = dens_mhl_nc_all_ages.flatten()
     
@@ -354,40 +380,53 @@ def end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDi
     N_own = mNet_worth_c_flat.size
     N_r   = vNet_worth_r.size
     N_all = 2*N_own + N_r
-
+    
     NW = np.empty(N_all)
-    NW_housing_share=np.empty(2*N_own)
+    
     dens_age_27 = np.empty(N_all)
     dens_age_15 = np.empty(N_all)
-    
+    dens_age_30 = np.empty(N_all)
     dens_all_ages = np.empty(N_all)
+    
+    # --- OWNERS-ONLY objects for housing wealth share ---
+    NW_housing_share = np.empty(2*N_own)
+    dens_housing_all_ages = np.empty(2*N_own)
+    
     # Owners C
     s = 0
     e = N_own
     NW[s:e] = mNet_worth_c_flat
     dens_age_27[s:e] = dens_mhl_c_age_27_flat
     dens_age_15[s:e] = dens_mhl_c_age_15_flat
+    dens_age_30[s:e] = dens_mhl_c_age_30_flat
+    dens_all_ages[s:e] = dens_mhl_c_all_ages_flat
     
-    NW_housing_share[s:e]=mHouse_wealth_share_c_flat
-    dens_all_ages[s:e]=dens_mhl_c_all_ages_flat
-    # owners NC
+    # owners-only housing share (C)
+    NW_housing_share[0:N_own] = mHouse_wealth_share_c_flat
+    dens_housing_all_ages[0:N_own] = dens_mhl_c_all_ages_flat
+    
+    # Owners NC
     s = e
     e = s + N_own
     NW[s:e] = mNet_worth_nc_flat
     dens_age_27[s:e] = dens_mhl_nc_age_27_flat
     dens_age_15[s:e] = dens_mhl_nc_age_15_flat
-
-    NW_housing_share[s:e]=mHouse_wealth_share_nc_flat
-    dens_all_ages[s:e]=dens_mhl_nc_all_ages_flat    
-    dens_housing_all_ages=dens_all_ages[:e]
-    # renters
+    dens_age_30[s:e] = dens_mhl_nc_age_30_flat
+    dens_all_ages[s:e] = dens_mhl_nc_all_ages_flat
+    
+    # owners-only housing share (NC)
+    NW_housing_share[N_own:2*N_own] = mHouse_wealth_share_nc_flat
+    dens_housing_all_ages[N_own:2*N_own] = dens_mhl_nc_all_ages_flat
+    
+    # Renters
     s = e
     e = s + N_r
     NW[s:e] = vNet_worth_r
     dens_age_27[s:e] = dens_m_r_age_27
     dens_age_15[s:e] = dens_m_r_age_15
+    dens_age_30[s:e] = dens_m_r_age_30
     dens_all_ages[s:e] = dens_m_r_all_ages
-        
+            
 
     
     # Now sort in order to get statistics within the distribution
@@ -395,6 +434,7 @@ def end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDi
     NW_sorted = NW[order]
     dens_age_15_sorted = dens_age_15[order]
     dens_age_27_sorted = dens_age_27[order] 
+    dens_age_30_sorted = dens_age_30[order]
     dens_all_ages_sorted=dens_all_ages[order] 
     
     order_housing = np.argsort(NW_housing_share)
@@ -403,14 +443,17 @@ def end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDi
     # cumulative densities for interpolation later
     cumdens_age_15 = np.cumsum(dens_age_15_sorted)
     cumdens_age_27 = np.cumsum(dens_age_27_sorted)
+    cumdens_age_30 = np.cumsum(dens_age_30_sorted)
     cumdens_all_ages = np.cumsum(dens_all_ages_sorted) 
     
     total_mass_age_15 = cumdens_age_15[-1]    
     total_mass_age_27 = cumdens_age_27[-1]  
+    total_mass_age_30 = cumdens_age_30[-1]
     total_mass_all_ages = cumdens_all_ages[-1]
     
     assert np.abs(total_mass_age_27-1/par.iNj)<1e-10
     assert np.abs(total_mass_age_15-1/par.iNj)<1e-10
+    assert np.abs(total_mass_age_30-1/par.iNj)<1e-10
     assert np.abs(total_mass_all_ages-1)<1e-10
 
     total_NW_age_15=np.dot(dens_age_15,NW)/total_mass_age_15
@@ -424,16 +467,41 @@ def end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDi
     
     thirtythree_percentile_NW_age_27 = np.interp(0.33*total_mass_age_27, cumdens_age_27, NW_sorted)
     sixtyseven_percentile_NW_age_27 = np.interp(0.67*total_mass_age_27, cumdens_age_27, NW_sorted)
+    thirtythree_percentile_NW_age_30 = np.interp(0.33*total_mass_age_30, cumdens_age_30, NW_sorted)
+    sixtyseven_percentile_NW_age_30 = np.interp(0.67*total_mass_age_30, cumdens_age_30, NW_sorted)
     
-    #outputs housing - the share of housing wealth in total wealth
-    cumdens_housing_all_ages=np.cumsum(dens_housing_all_ages_sorted)
-    total_mass_housing_all_ages=cumdens_housing_all_ages[-1]
-    tenth_percentile_housing = np.interp(0.10*total_mass_housing_all_ages, cumdens_housing_all_ages, NW_housing_share_sorted)
-    median_housing = np.interp(0.50*total_mass_housing_all_ages, cumdens_housing_all_ages, NW_housing_share_sorted)
-    ninetieth_percentile_housing = np.interp(0.90*total_mass_housing_all_ages, cumdens_housing_all_ages, NW_housing_share_sorted)
-    
-    return total_NW_HO_C, total_NW_HO_NC, total_NW_R, total_NW_HO, total_NW_age_15, total_NW_age_27, total_NW_all_ages, median_NW_age_15, median_NW_age_27, median_NW_all_ages, thirtythree_percentile_NW_age_27, sixtyseven_percentile_NW_age_27, tenth_percentile_housing, median_housing, ninetieth_percentile_housing, cumdens_housing_all_ages, NW_housing_share_sorted  
+    # ----------------------------------------------------
+    # Sort for owners-only housing wealth share stats
+    mass_owners = np.sum(dens_housing_all_ages)
+    mass_share_zero = np.sum(dens_housing_all_ages[NW_housing_share == 0.0])
+    share_zero_frac = mass_share_zero / mass_owners
+    print('above 0.1?', share_zero_frac)
+    mass_UW = underwater_mass_jhl(par, grids, mDist_c, mDist_nc)
 
+    # Print only cells with positive mass
+    print("j_index | h_index | l_index | ltv | mass")
+    J, H, L = mass_UW.shape
+    for j in range(J):
+        for h in range(H):
+            for l in range(L):
+                m = mass_UW[j, h, l]
+                if m > 0.0:
+                    print(j, h, l, grids.vL_sim[l], m)
+    order_housing = np.argsort(NW_housing_share)
+    NW_housing_share_sorted = NW_housing_share[order_housing]
+    dens_housing_all_ages_sorted = dens_housing_all_ages[order_housing]
+    
+    cumdens_housing_all_ages = np.cumsum(dens_housing_all_ages_sorted)
+    total_mass_housing_all_ages = cumdens_housing_all_ages[-1]
+    
+    tenth_percentile_housing = np.interp(0.10*total_mass_housing_all_ages,
+                                         cumdens_housing_all_ages, NW_housing_share_sorted)
+    median_housing = np.interp(0.50*total_mass_housing_all_ages,
+                               cumdens_housing_all_ages, NW_housing_share_sorted)
+    ninetieth_percentile_housing = np.interp(0.90*total_mass_housing_all_ages,
+                                             cumdens_housing_all_ages, NW_housing_share_sorted)
+    
+    return total_NW_HO_C, total_NW_HO_NC, total_NW_R, total_NW_HO, total_NW_age_15, total_NW_age_27, total_NW_all_ages, median_NW_age_15, median_NW_age_27, median_NW_all_ages, thirtythree_percentile_NW_age_27, sixtyseven_percentile_NW_age_27, thirtythree_percentile_NW_age_30, sixtyseven_percentile_NW_age_30, tenth_percentile_housing, median_housing, ninetieth_percentile_housing, cumdens_housing_all_ages, NW_housing_share_sorted
 @njit 
 def safe_share(numerator, denominator):
     output=0.0    
@@ -442,3 +510,31 @@ def safe_share(numerator, denominator):
         output=np.sum(numerator)/denominator
     
     return output 
+
+@njit
+def underwater_mass_jhl(par, grids, mDist_c, mDist_nc):
+    """
+    Returns mass_UW[j,h,l] = mass of owners (C+NC) with negative housing wealth
+    (i.e. equity_factor < 0 and h > 0), summed over (k,g,m,e).
+    """
+    J, K, G, M, H, L, E = mDist_c.shape
+    mass_UW = np.zeros((J, H, L))
+
+    for l_index in range(L):
+        ltv = grids.vL_sim[l_index]
+        equity_factor = 1.0 - ltv * (1.0 + par.r_m) - par.dDelta  # sign drives underwater if h>0
+
+        if equity_factor < 0.0:
+            for h_index in range(H):
+                if grids.vH[h_index] > 0.0:
+                    for j_index in range(J):
+                        acc = 0.0
+                        for k_index in range(K):
+                            for g_index in range(G):
+                                for m_index in range(M):
+                                    for e_index in range(E):
+                                        acc += mDist_c[j_index, k_index, g_index, m_index, h_index, l_index, e_index]
+                                        acc += mDist_nc[j_index, k_index, g_index, m_index, h_index, l_index, e_index]
+                        mass_UW[j_index, h_index, l_index] = acc
+
+    return mass_UW
