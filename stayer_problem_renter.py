@@ -75,7 +75,7 @@ def solve(par, grids, j_index, k_index, g_index, t_index, dP_C, dP_NC, dP_C_prim
                 assert not np.isnan(mC_pol) and mC_pol>0
                 mQt[x_index]=-1/ut.u_c(j,mC_pol,h_pol,g_renter, par)                 
                 mB_pol[x_index]=grids.vB[0]
-                if k_index == 1 and welfare == True:
+                if  welfare == True:
                     mVt_wf[x_index] = -1/(ut.u(j,C_candidate,h_pol,g_renter, par)+mW_next_wf[0])
                 
     for b_prime_index in range(grids.vB.size-1):  
@@ -91,7 +91,7 @@ def solve(par, grids, j_index, k_index, g_index, t_index, dP_C, dP_NC, dP_C_prim
                     assert not np.isnan(mC_pol) and mC_pol>0
                     mQt[x_index]=-1/ut.u_c(j,mC_pol,h_pol,g_renter, par)   
                     mB_pol[x_index]=grids.vX[x_index]-Exp_candidate
-                    if k_index == 1 and welfare == True:
+                    if  welfare == True:
                         mVt_wf[x_index] = -1/(ut.u(j,C_candidate,h_pol,g_renter, par)+mW_next_wf[b_prime_index]+(mW_next_wf[b_prime_index+1]-mW_next_wf[b_prime_index])/(grids.vB[b_prime_index+1]-grids.vB[b_prime_index])*((grids.vX[x_index]-Exp_candidate)-grids.vB[b_prime_index]))
                     
     for x_index in range(grids.vX.size):                
@@ -106,7 +106,7 @@ def solve(par, grids, j_index, k_index, g_index, t_index, dP_C, dP_NC, dP_C_prim
                 assert not np.isnan(mC_pol) and mC_pol>0
                 mQt[x_index]=-1/ut.u_c(j,mC_pol,h_pol,g_renter, par)   
                 mB_pol[x_index]=grids.vX[x_index]-Exp_candidate
-                if k_index == 1 and welfare == True:
+                if  welfare == True:
                     mVt_wf[x_index] = -1/(ut.u(j,C_candidate,h_pol,g_renter, par)+mW_next_wf[vX_endog_max_index])
             
     

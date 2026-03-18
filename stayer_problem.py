@@ -58,7 +58,7 @@ def solve(par, grids, j_index, k_index, g_index, mW_next, mQ_next, mW_next_wf, w
                     mVt[m_index,h_index,l_index]=-1/(ut.u(j,mC_pol[m_index,h_index,l_index],h,g+par.dOmega, par)+mW_next[0,h_index, l_index])
                     mQt[m_index,h_index,l_index]=-1/ut.u_c(j,mC_pol[m_index,h_index,l_index],h,g+par.dOmega, par)      
                     mB_pol[m_index,h_index,l_index]=vB_grid[0]
-                    if k_index == 1 and welfare == True:
+                    if welfare == True:
                         mVt_wf[m_index,h_index,l_index] = -1/(ut.u(j,mC_pol[m_index,h_index,l_index],h,g+par.dOmega, par)+mW_next_wf[0,h_index, l_index])
                 
             # upper envelope due to value function not being concave (FOC not sufficient, only necessary)
@@ -72,7 +72,7 @@ def solve(par, grids, j_index, k_index, g_index, mW_next, mQ_next, mW_next_wf, w
                            mC_pol[m_index,h_index,l_index]=C_candidate
                            mQt[m_index,h_index,l_index]=-1/ut.u_c(j,mC_pol[m_index,h_index,l_index],h,g+par.dOmega, par)
                            mB_pol[m_index,h_index,l_index]=grids.vM[m_index]-mC_pol[m_index,h_index,l_index]
-                           if k_index == 1 and welfare == True:
+                           if welfare == True:
                                mVt_wf[m_index,h_index,l_index] =-1/(ut.u(j,C_candidate,h,g+par.dOmega, par)+mW_next_wf[b_prime_index,h_index, l_index]+(mW_next_wf[b_prime_index+1,h_index, l_index]-mW_next_wf[b_prime_index,h_index, l_index])/(grids.vB[b_prime_index+1]-grids.vB[b_prime_index])*((grids.vM[m_index]-C_candidate)-grids.vB[b_prime_index]))
             
             # handle corner case properly (no extrapolation)
@@ -85,7 +85,7 @@ def solve(par, grids, j_index, k_index, g_index, mW_next, mQ_next, mW_next_wf, w
                        mC_pol[m_index,h_index,l_index]=C_candidate
                        mQt[m_index,h_index,l_index]=-1/ut.u_c(j,mC_pol[m_index,h_index,l_index],h,g+par.dOmega, par)
                        mB_pol[m_index,h_index,l_index]=grids.vB[vM_endog_max_index]
-                       if k_index == 1 and welfare == True:
+                       if welfare == True:
                            mVt_wf[m_index,h_index,l_index] = -1/(ut.u(j,C_candidate,h,g+par.dOmega, par)+mW_next_wf[vM_endog_max_index,h_index, l_index])
                     
 

@@ -41,7 +41,7 @@ def solve(par, grids, j_index, k_index, g_index, e_index, dP, mVt_stayer, mC_pol
                             assert C_pol > 0
                             mVt[x_index] = Vt_candidate                                  
                             mQt[x_index] = -1/ut.u_c(j,C_pol,h,g+par.dOmega, par) 
-                            if k_index == 1 and welfare == True:
+                            if welfare == True:
                                 mVt_wf[x_index] = interpfun.interp_1d(grids.vM,mVt_stayer_wf[:,h_index, l_index],m_buyer)
 
                     if m_buyer>grids.vM[-1]:
@@ -51,7 +51,7 @@ def solve(par, grids, j_index, k_index, g_index, e_index, dP, mVt_stayer, mC_pol
                             assert C_pol > 0
                             mVt[x_index] = Vt_candidate                                  
                             mQt[x_index] = -1/ut.u_c(j,C_pol,h,g+par.dOmega, par) 
-                            if k_index == 1 and welfare == True:
+                            if welfare == True:
                                 mVt_wf[x_index] = -1/(-1/mVt_stayer_wf[-1,h_index, l_index]+ut.u(j,C_pol,h,g+par.dOmega, par)-ut.u(j,mC_pol_stayer[-1,h_index, l_index],h,g+par.dOmega, par))
        
 
