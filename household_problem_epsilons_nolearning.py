@@ -171,7 +171,7 @@ def solve_ss(grids, par, iNj, mMarkov,dCoeff_C, dCoeff_NC, initial = True, scept
         t_index=0
     else:
         dPi_L=grids.vPi_L[-1]
-        t_index=-1
+        t_index=grids.vTime.size-1
     
     for k_index in range(k_dim):
         for g_index in range(grids.vG.size):

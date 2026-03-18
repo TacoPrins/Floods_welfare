@@ -48,10 +48,10 @@ def main():
     # import parameters
     #vCoeff_C_initial=np.array([0.72392258, 0.,         0.,         0.,         0.        ])
     #vCoeff_NC_initial=np.array([0.76693964, 0.,         0.,         0.,         0.        ])
-    vCoeff_C_initial=np.array([0.652013, 0.,         0.,         0.,         0.        ])
-    vCoeff_NC_initial=np.array([0.84226555, 0.,         0.,         0.,         0.        ])
-    vCoeff_C_terminal=np.array([0.61035992, 0.,0.,0.,0. ])
-    vCoeff_NC_terminal=np.array([0.74840242,0.,0.,0.,0.])
+    vCoeff_C_initial=np.array([0.69906474, 0.,         0.,         0.,         0.        ])
+    vCoeff_NC_initial=np.array([0.78259554, 0.,         0.,         0.,         0.        ])
+    vCoeff_C_terminal=np.array([0.64593555, 0.,0.,0.,0. ])
+    vCoeff_NC_terminal=np.array([0.81939835,0.,0.,0.,0.])
     
     #vCoeff_C_initial=np.array([0.56, 0.,         0.,         0.,         0.        ])
     #vCoeff_NC_initial=np.array([0.85, 0.,         0.,         0.,         0.        ])
@@ -93,26 +93,29 @@ def main():
     vCoeff_C_RE=np.array([ 0.66131548, -0.05658024,  0.00335141,  0.00720003,  0.00200794])
     vCoeff_NC_RE=np.array([ 8.12788151e-01,  3.63663858e-02, -3.01088988e-03, -4.55020052e-03,
      -2.91834972e-04])
-    vCoeff_C=np.array([ 0.61740681,-0.02084554,0.00677531,0.00222026,-0.00078348])
-    vCoeff_NC=np.array([ 0.7427225,0.01201492,-0.00576798,-0.0016401,.00126285])
-    
-    dP_C_guess, dP_NC_guess, vCoeff_C_initial, vCoeff_NC_initial, mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, _, _ = equil.initialise_coefficients_ss(par, grids, method, par.iNj, mMarkov, vCoeff_C_initial, vCoeff_NC_initial)
+    vCoeff_C=np.array([ 0.66322123, -0.02993524,  0.00516973,  0.00791471,  0.00254017])
+    vCoeff_NC=np.array([ 0.81001542,  0.01683328, -0.00602232, -0.00117873,  0.00108142])
+    vCoeff_C_experiment=np.array([ 0.62190337, -0.04657477,  0.00822706,  0.00254822,  0.0029312 ])
+    vCoeff_NC_experiment=np.array([ 8.36567710e-01,  2.38785227e-02, -3.96488165e-03, -4.07334828e-04, 2.94338367e-03])
+
+    dP_C_guess, dP_NC_guess, vCoeff_C_initial, vCoeff_NC_initial, mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, _, _ = equil.initialise_coefficients_ss(par, grids, method, par.iNj, mMarkov, vCoeff_C_initial, vCoeff_NC_initial, False)
+    """
     sceptics=True
     dP_C_vec, dP_NC_vec, vCoeff_C, vCoeff_NC, iteration, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=equil.find_coefficients(par, grids, method, sceptics, par.iNj, mMarkov, vCoeff_C, vCoeff_NC,vCoeff_C_initial[0], vCoeff_NC_initial[0],mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0)
     df = pd.DataFrame(vCoeff_C)
-    df.to_excel("dP_C_vec")    
+    df.to_excel("dP_C_vec.xslx")    
     df = pd.DataFrame(vCoeff_NC)
-    df.to_excel("dP_NC_vec")
-    vCoeff_C_experiment=vCoeff_C
-    vCoeff_NC_experiment=vCoeff_NC
+    df.to_excel("dP_NC_vec.xslx")
+
+    
     func=False
     price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=experiments.full_information_experiment(par, func, method,  vCoeff_C, vCoeff_NC, vCoeff_C_experiment, vCoeff_NC_experiment, vCoeff_C_initial, vCoeff_NC_initial)
     df = pd.DataFrame(vCoeff_C_experiment)
-    df.to_excel("dP_C_vec_experiment")    
+    df.to_excel("dP_C_vec_experiment.xslx")    
     df = pd.DataFrame(vCoeff_NC_experiment)
-    df.to_excel("dP_NC_vec_experiment")
+    df.to_excel("dP_NC_vec_experiment.xslx")
     
-    """
+
     vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = household_problem.solve(grids, par, dPi_L, par.iNj, mMarkov,vCoeff_C,vCoeff_NC)
     for t_index in range(grids.vTime.size):
         plt.plot(grids.vM, vt_stay_c[t_index,5, 0,0 , :, 0, 0,2],label=f'{t_index}')        
@@ -191,9 +194,9 @@ def main():
     
     #dP_C_vec, dP_NC_vec, vCoeff_C, vCoeff_NC, iteration, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=equil.find_coefficients(par, grids, method, False, dPi_L, par.iNj, mMarkov, vCoeff_C_RE, vCoeff_NC_RE,vCoeff_C_initial, vCoeff_NC_initial,mDist0_c_initial, mDist0_nc_initial, mDist0_renter_initial, rental_stock_C0_initial, rental_stock_NC0_initial, coastal_beq0_initial, noncoastal_beq0_initial, savings_beq0_initial)
     #df = pd.DataFrame(vCoeff_C)
-    #df.to_excel("dP_C_vec_RE")
+    #df.to_excel("dP_C_vec_RE.xslx")
     #df = pd.DataFrame(vCoeff_NC)
-    #df.to_excel("dP_NC_vec_RE")
+    #df.to_excel("dP_NC_vec_RE.xslx")
     
  
  
@@ -211,9 +214,9 @@ def main():
     
     dP_C_vec, dP_NC_vec, vCoeff_C, vCoeff_NC, iteration, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=equil.find_coefficients(par, grids, method, True, dPi_L, par.iNj, mMarkov, vCoeff_C, vCoeff_NC,vCoeff_C_initial, vCoeff_NC_initial,mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0_initial, rental_stock_NC0_initial, coastal_beq0_initial, noncoastal_beq0_initial, savings_beq0_initial)
     df = pd.DataFrame(vCoeff_C)
-    df.to_excel("dP_C_vec_HE")
+    df.to_excel("dP_C_vec_HE.xslx")
     df = pd.DataFrame(vCoeff_NC)
-    df.to_excel("dP_NC_vec_HE")
+    df.to_excel("dP_NC_vec_HE.xslx")
    
     
     results_vector[0:5]=vCoeff_C_initial

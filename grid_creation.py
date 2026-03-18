@@ -34,7 +34,7 @@ def create(par, experiment=False):
         
 
     if experiment:
-        vPi_S_median=par.vPi_S_truncated
+        vPi_S_median=par.vPi_S_median[int((2026-1998)/par.time_increment):]
     else:
         vPi_S_median=par.vPi_S_median    
     vZ= np.array([1, 0.9, 0.7, 0.3])

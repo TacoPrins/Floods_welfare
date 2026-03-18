@@ -83,7 +83,7 @@ def full_information_shock(grids, par, method, iNj, mMarkov, vCoeff_C_experiment
     
     mDist_c_start[:,0,:,:,:,:,:] = mDist1_c[:,0,:,:,:,:,:]+mDist1_c[:,1,:,:,:,:,:]
     mDist_nc_start[:,0,:,:,:,:,:] = mDist1_nc[:,0,:,:,:,:,:]+mDist1_nc[:,1,:,:,:,:,:]
-    mDist_renter_start[:,0,:,:,:] = mDist1_c[:,0,:,:,:]+mDist1_c[:,1,:,:,:]
+    mDist_renter_start[:,0,:,:,:] = mDist1_renter[:,0,:,:,:]+mDist1_renter[:,1,:,:,:]
     
     
     dP_C_initial=price_history[0,-2]

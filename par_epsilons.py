@@ -7,7 +7,6 @@ vPi_S_median=np.array([0.0194,    0.0198,    0.0202,    0.0206,    0.0210,    0.
 0.0376,    0.0392,    0.0410,    0.0427,    0.0444,    0.0461,    0.0478,    0.0495,    0.0513,    0.0530,    0.0547,    0.0565,    0.0583,
 0.0601,    0.0619,    0.0637,    0.0654,    0.0672,    0.0690,    0.0708,    0.0726,    0.0744,    0.0762,    0.0780,    0.0798,    0.0816,    0.0816,    0.0816,    0.0816,    0.0816])
 
-vPi_S_median_truncated=vPi_S_median[int((2026-1998)/time_increment):]
 
 #vPi_S_median=np.array([0.0194, 0.0194,0.0194])
 
@@ -33,7 +32,6 @@ par_dict = {"time_increment": time_increment,
           "r": 1.03**time_increment-1, 
           "r_m": 1.04**time_increment-1, 
           'vPi_S_median': vPi_S_median,
-          'vPi_S_median_truncated': vPi_S_median_truncated,
           "dKappa_sell": 0.07,
           "dKappa_buy": 0,
           "dXi_foreclosure": 0.8,
