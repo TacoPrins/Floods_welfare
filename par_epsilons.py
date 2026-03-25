@@ -1,4 +1,4 @@
-
+"par_epsilons.py"
 import numpy as np
 
 time_increment=2
@@ -68,6 +68,7 @@ par_dict = {"time_increment": time_increment,
           "iM":1,
           'vAgeEquiv':np.ones(50),
           'dNC_frac': 0.5,
+          'wf_wedge': np.array([0]),
           'dC_frac': 0.5,
           'dTheta': 1.5/2.5, 
           'dL': 0.311,
