@@ -256,7 +256,10 @@ def find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initia
         # weight
         for k_index in range(k_dim):
             for g_index in range(grids.vG.size):
-                mDist1_renter[0,k_index,g_index,:,:]= (1/par.iNj)*(1/grids.vG.size)*grids.vTypes[k_index]*mPi_joint              
+                if sceptics==True:
+                    mDist1_renter[0,k_index,g_index,:,:]= (1/par.iNj)*(1/grids.vG.size)*grids.vTypes[k_index]*mPi_joint        
+                else:
+                    mDist1_renter[0,k_index,g_index,:,:]= (1/par.iNj)*(1/grids.vG.size)*mPi_joint 
                 wf_SLR_newborns = np.sum(mDist1_renter[0,k_index, g_index, :,:]* v_nonowner_wf_expanded_SLR[t_index,0,k_index, g_index, :,:])
                 for wf_idx in range(wf_loss.size):
                     ce_renter_newborns[wf_idx,t_index, k_index, g_index] = wf_SS_newborns[wf_idx, k_index,g_index] - wf_SLR_newborns 
