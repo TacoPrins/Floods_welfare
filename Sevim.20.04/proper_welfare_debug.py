@@ -173,7 +173,7 @@ def solve(par, grids, mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_in,
     return welfare_loss_total, welfare_loss_alive_C, welfare_loss_alive_NC, welfare_loss_alive_renters, welfare_loss_newborns, welfare_loss_newborns_oldweights, welfare_loss_newborns_agg_perT, welfare_loss_alive_C_Hspace, welfare_loss_alive_NC_Hspace, mass_share_C_GH, mass_share_NC_GH
 
 @njit
-def find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_in, vCoeff_NC_in, sceptics = True):
+def find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_in, vCoeff_NC_in, sceptics=True):
     method='secant'
     func=False
     initial=True
@@ -182,21 +182,25 @@ def find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initia
     # run and save SS without welfare: get stationary dist
     vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter=household_problem.solve_ss(grids, par, par.iNj, mMarkov,vCoeff_C_initial[0], vCoeff_NC_initial[0], initial, sceptics, welfare)
     bequest_guess=np.zeros((3))
-    mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, rental_stock_C_out, rental_stock_NC_out, coastal_beq, noncoastal_beq, savings_beq, _, _, _, _=sim.stat_dist_finder(sceptics, grids, par, mMarkov, par.iNj, vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,], b_stay_nc[0,], b_renter[0,], vCoeff_C_initial,vCoeff_NC_initial, bequest_guess, initial)
+    mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, rental_stock_C_out, rental_stock_NC_out, coastal_beq, noncoastal_beq, savings_beq, _, _, _, _,_,_,_=sim.stat_dist_finder(sceptics, grids, par, mMarkov, par.iNj, vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,], b_stay_nc[0,], b_renter[0,], vCoeff_C_initial,vCoeff_NC_initial, bequest_guess, initial)
     
     # get value functions over transition with SLR
     welfare = True
-
-    price_history, _, _, mDist1_renter, stock_demand_rental_C1, stock_demand_rental_NC1, vcoastal_beq, vnoncoastal_beq, vsavings_beq, _, _, _, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf=equil.generate_pricepath(grids, par, func, mMarkov, vCoeff_C_in,vCoeff_NC_in, vCoeff_C_initial[0], vCoeff_NC_initial[0], mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, rental_stock_C_out, rental_stock_NC_out, coastal_beq, noncoastal_beq, savings_beq, method, sceptics, experiment, welfare)
-    v_nonowner_wf_expanded_SLR=grid_adjust_rentshape(par,grids,v_nonowner_wf)
-    v_owner_c_wf_expanded_SLR=grid_adjust(par,grids,v_owner_c_wf)
-    v_owner_nc_wf_expanded_SLR=grid_adjust(par,grids,v_owner_nc_wf)
-    
     if sceptics==False:
         k_dim=1
     else:
         k_dim=grids.vK.size        
-    wf_loss = np.linspace(-0.02, 0.05,30)
+    
+    coastal_mass_J=np.zeros((k_dim))
+    noncoastal_mass_J=np.zeros((k_dim))
+    renter_mass_J=np.zeros((k_dim))
+    price_history, _, _, mDist1_renter, stock_demand_rental_C1, stock_demand_rental_NC1, vcoastal_beq, vnoncoastal_beq, vsavings_beq, _, _, _, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf,_,_,_=equil.generate_pricepath(grids, par, func, mMarkov, vCoeff_C_in,vCoeff_NC_in, vCoeff_C_initial[0], vCoeff_NC_initial[0], mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, rental_stock_C_out, rental_stock_NC_out, coastal_beq, noncoastal_beq, savings_beq,coastal_mass_J,noncoastal_mass_J,renter_mass_J, method, sceptics, experiment, welfare)
+    v_nonowner_wf_expanded_SLR=grid_adjust_rentshape(par,grids,v_nonowner_wf)
+    v_owner_c_wf_expanded_SLR=grid_adjust(par,grids,v_owner_c_wf)
+    v_owner_nc_wf_expanded_SLR=grid_adjust(par,grids,v_owner_nc_wf)
+    
+    
+    wf_loss = np.linspace(-0.10, 0.15,100)
     
     ce_C  = np.zeros((wf_loss.size,k_dim, grids.vG.size))
     ce_NC = np.zeros((wf_loss.size,k_dim, grids.vG.size))
@@ -208,22 +212,22 @@ def find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initia
     wf_SLR_rent=np.zeros((k_dim,grids.vG.size))
     wf_SS_newborns=np.zeros((wf_loss.size,k_dim,grids.vG.size))
     
-    # alive generations SLR
     for k_index in range(k_dim):
         for g_index in range(grids.vG.size):
             wf_SLR_c[k_index,g_index] = np.sum(mDist1_c_SS[1:,k_index, g_index, :,:,:,:]* v_owner_c_wf_expanded_SLR[0,1:,k_index, g_index, :,:,:,:])
             wf_SLR_nc[k_index,g_index] = np.sum(mDist1_nc_SS[1:,k_index, g_index, :,:,:,:]* v_owner_nc_wf_expanded_SLR[0,1:,k_index, g_index, :,:,:,:])
             wf_SLR_rent[k_index,g_index] = np.sum(mDist1_renter_SS[:,k_index, g_index, :,:]* v_nonowner_wf_expanded_SLR[0,:,k_index, g_index, :,:])
-
+    
     
     for wf_idx in range(wf_loss.size):
         par.wf_wedge[0] = wf_loss[wf_idx]
         print(par.wf_wedge[0])
-        
+
         v_owner_c_wf_SS, v_owner_nc_wf_SS, v_nonowner_wf_SS, _, _, _ = household_problem.solve_ss(grids, par, par.iNj, mMarkov,vCoeff_C_initial[0], vCoeff_NC_initial[0], initial, sceptics, welfare)
         v_nonowner_wf_expanded_SS=grid_adjust_rentshape(par,grids,v_nonowner_wf_SS)
         v_owner_c_wf_expanded_SS=grid_adjust(par,grids,v_owner_c_wf_SS)
         v_owner_nc_wf_expanded_SS=grid_adjust(par,grids,v_owner_nc_wf_SS)
+        
         
         for k_index in range(k_dim):
             for g_index in range(grids.vG.size):
@@ -234,13 +238,13 @@ def find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initia
                 ce_C[wf_idx,k_index, g_index] = wf_SS_c - wf_SLR_c[k_index,g_index]
                 ce_NC[wf_idx,k_index, g_index] = wf_SS_nc - wf_SLR_nc[k_index,g_index]
                 ce_renter[wf_idx,k_index, g_index] = wf_SS_rent - wf_SLR_rent[k_index,g_index]
-    
+        
  
         
         for k_index in range(k_dim):
             for g_index in range(grids.vG.size):
                 wf_SS_newborns[wf_idx, k_index,g_index] = np.sum(mDist1_renter_SS[0,k_index, g_index, :,:]* v_nonowner_wf_expanded_SS[0,0,k_index, g_index, :,:])
-                    
+            
         
     for t_index in range(grids.vTime.size):
         dP_C=price_history[t_index,0]
@@ -252,22 +256,21 @@ def find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initia
         # weight
         for k_index in range(k_dim):
             for g_index in range(grids.vG.size):
-                if sceptics == True:
-                    mDist1_renter[0,k_index,g_index,:,:]= (1/par.iNj)*grids.vTypes[k_index]*(1/grids.vG.size)*mPi_joint
+                if sceptics==True:
+                    mDist1_renter[0,k_index,g_index,:,:]= (1/par.iNj)*(1/grids.vG.size)*grids.vTypes[k_index]*mPi_joint        
                 else:
-                    mDist1_renter[0,k_index,g_index,:,:]= (1/par.iNj)*(1/grids.vG.size)*mPi_joint
+                    mDist1_renter[0,k_index,g_index,:,:]= (1/par.iNj)*(1/grids.vG.size)*mPi_joint 
                 wf_SLR_newborns = np.sum(mDist1_renter[0,k_index, g_index, :,:]* v_nonowner_wf_expanded_SLR[t_index,0,k_index, g_index, :,:])
                 for wf_idx in range(wf_loss.size):
                     ce_renter_newborns[wf_idx,t_index, k_index, g_index] = wf_SS_newborns[wf_idx, k_index,g_index] - wf_SLR_newborns 
-                    # if e_index == 2 and g_index == 4 and k_index == 0:
-                    #     print('t', t_index, 'wf', wf_loss[wf_idx])
-                    #     print('wf_SLR:', wf_SLR_newborns)
-                    #     print('wf ss',  wf_SS_newborns[wf_idx, k_index,g_index,e_index])
-                    #     print('difference', ce_renter_newborns[wf_idx,t_index, k_index, g_index, e_index])
+
         if t_index<grids.vTime.size-1:
             coastal_beq=vcoastal_beq[t_index]
             noncoastal_beq=vnoncoastal_beq[t_index]
-            savings_beq=vsavings_beq[t_index]       
+            savings_beq=vsavings_beq[t_index]
+            
+
+                    
                         
     par.wf_wedge[0] = 0.0
     
@@ -277,24 +280,16 @@ def find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initia
     tax_equiv_renter = np.zeros((k_dim, grids.vG.size))
     tax_equiv_newborns = np.zeros((grids.vTime.size, k_dim, grids.vG.size))
     
-        
     for k_index in range(k_dim):
-        for g_index in range(grids.vG.size):
-            # print('k,g', k_index, g_index)
-            # print("C:", ce_C[:,k_index, g_index, 2])
-            # print("NC:", ce_NC[:,k_index, g_index, 2])
-            # print("renters:", ce_renter[:,k_index, g_index, 2])
+        for g_index in range(grids.vG.size):            
+            
             tax_equiv_C[k_index, g_index] = find_zero_linear(wf_loss, ce_C[:,k_index, g_index]) # find wf_loss that makes ce_C[:,k_index, g_index, e_index] equal to zero
             tax_equiv_NC[k_index, g_index] = find_zero_linear(wf_loss, ce_NC[:,k_index, g_index])  # find wf_loss that makes ce_NC[:,k_index, g_index, e_index] equal to zero
             tax_equiv_renter[k_index, g_index] = find_zero_linear(wf_loss, ce_renter[:,k_index, g_index])  # find wf_loss that makes ce_renter[:,k_index, g_index, e_index] equal to zero
-            # if e_index==2:
-                # print('k,g', k_index, g_index)
-                # print("C:",  tax_equiv_C[k_index, g_index, e_index])
-                # print("NC:", tax_equiv_NC[k_index, g_index, e_index])
-                # print("renters:", tax_equiv_renter[k_index, g_index, e_index])
+
             for t_index in range(grids.vTime.size):
                 tax_equiv_newborns[t_index, k_index, g_index] = find_zero_linear(wf_loss, ce_renter_newborns[:,t_index, k_index, g_index])
-                
+                    
 
     return tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns
 

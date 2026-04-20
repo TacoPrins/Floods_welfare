@@ -328,9 +328,9 @@ def main():
 
     vCoeff_C=np.array([ 0.66335385, -0.03015386,  0.00541847,  0.00797395,  0.00249396])
     vCoeff_NC=np.array([ 0.81033554,  0.01679082, -0.00574326, -0.00115107,  0.00101112])
-    #NOT CONVERGED YET 
-    vCoeff_C_RE=np.array([ 0.6355361, -0.05750348,0.00171657, 0.00611094,0.00187107])
-    vCoeff_NC_RE=np.array([ 0.82617263, 0.03256824, -0.00530541,-0.00385609,0.00083488])
+    # #NOT CONVERGED YET 
+    # vCoeff_C_RE=np.array([ 0.6355361, -0.05750348,0.00171657, 0.00611094,0.00187107])
+    # vCoeff_NC_RE=np.array([ 0.82617263, 0.03256824, -0.00530541,-0.00385609,0.00083488])
     
     
     vCoeff_C_experiment=np.array([ 0.62190337, -0.04657477,  0.00822706,  0.00254822,  0.0029312 ])
@@ -338,27 +338,40 @@ def main():
     
     method='secant'
     func=False
-    initial=True
+    # initial=True
     # sceptics=False 
-    welfare=True
-    # run and save SS without welfare
-    # v_owner_c_wf_SS, v_owner_nc_wf_SS, v_nonowner_wf_SS, _, _, _=household_problem.solve_ss(grids, par, par.iNj, mMarkov,vCoeff_C_initial[0], vCoeff_NC_initial[0], initial, sceptics, welfare)
-    # vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf = household_problem.solve(grids, par, par.iNj, mMarkov,vCoeff_C_RE,vCoeff_NC_RE, sceptics, welfare)
+    # welfare=True
     
-    tax_equiv_C_RE, tax_equiv_NC_RE, tax_equiv_renter_RE, tax_equiv_newborns_RE =  welfare_stats.find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_RE, vCoeff_NC_RE, False)
-    tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns =  welfare_stats.find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C, vCoeff_NC, True)
+    # tax_equiv_C_RE, tax_equiv_NC_RE, tax_equiv_renter_RE, tax_equiv_newborns_RE =  welfare_stats.find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_RE, vCoeff_NC_RE, False)
+    # tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns =  welfare_stats.find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C, vCoeff_NC, True)
 
 
-    plot_tax_equiv(grids, 100*-tax_equiv_C[:,:], 100*-tax_equiv_NC[:,:], 100*-tax_equiv_renter[:,:], 'Expenditure equivalent - Renters')
-    plot_tax_equiv_newborns(grids, 100*-tax_equiv_newborns[:,:,:])
-    plot_tax_equiv_RE_vs_nonRE(grids,100*-tax_equiv_C,100*-tax_equiv_NC,100*-tax_equiv_renter,100*-tax_equiv_C_RE, 100*-tax_equiv_NC_RE,100*-tax_equiv_renter_RE)
+    # plot_tax_equiv(grids, 100*-tax_equiv_C[:,:], 100*-tax_equiv_NC[:,:], 100*-tax_equiv_renter[:,:], 'Expenditure equivalent - Renters')
+    # plot_tax_equiv_newborns(grids, 100*-tax_equiv_newborns[:,:,:])
+    # plot_tax_equiv_RE_vs_nonRE(grids,100*-tax_equiv_C,100*-tax_equiv_NC,100*-tax_equiv_renter,100*-tax_equiv_C_RE, 100*-tax_equiv_NC_RE,100*-tax_equiv_renter_RE)
 
-    plot_tax_equiv_newborns_RE_vs_nonRE(grids,100*-tax_equiv_newborns,100*-tax_equiv_newborns_RE)
+    # plot_tax_equiv_newborns_RE_vs_nonRE(grids,100*-tax_equiv_newborns,100*-tax_equiv_newborns_RE)
 
-
+    # run experiments:
+    price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = experiments.building_restriction_experiments(par, func, method, vCoeff_C, vCoeff_NC, vCoeff_C_experiment, vCoeff_NC_experiment, vCoeff_C_initial, vCoeff_NC_initial)    
+    #experiments.full_information_experiment(par, func, method,  vCoeff_C, vCoeff_NC, vCoeff_C_experiment, vCoeff_NC_experiment, vCoeff_C_initial, vCoeff_NC_initial)
+    print('price history')
+    print(price_history)
+    
+    print('vCoeff_NC_experiment')
+    print(vCoeff_NC_experiment)
+    
+    print('vCoeff_C_experiment')
+    print(vCoeff_C_experiment)
+    
+    print('dP_NC_vec_experiment')
+    print(dP_NC_vec_experiment)
+    
+    print('dP_C_vec_experiment')
+    print(dP_C_vec_experiment)
+    
 ###########################################################
 
 ### start main
 if __name__ == "__main__":
     main()
-

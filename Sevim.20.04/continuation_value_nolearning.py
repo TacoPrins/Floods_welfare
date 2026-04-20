@@ -11,8 +11,13 @@ import utility_epsilons as ut
 import interp as interp
 
 @njit
-def solve_last_period_owners_C(par, grids,  vPi_S, dPi_L, k_index, dP_C_prime,mortgage_size_C, welfare):
-
+def solve_last_period_owners_C(par, grids,  vPi_S, dPi_L, k_index, dP_C_prime,mortgage_size_C, welfare, mortgage_premium = False):
+    
+    if mortgage_premium == False:
+        mortgage_rate = par.r_m
+    elif mortgage_premium == True:
+        mortgage_rate = par.r_prem_C
+    
     mW = np.zeros((grids.vB.size, grids.vH.size, grids.vL.size))
     mW_wf = np.zeros((grids.vB.size, grids.vH.size, grids.vL.size))
     mQ = np.zeros((grids.vB.size, grids.vH.size, grids.vL.size))
@@ -40,10 +45,10 @@ def solve_last_period_owners_C(par, grids,  vPi_S, dPi_L, k_index, dP_C_prime,mo
                         else:                                    
                             prob_dZ = dPi_L*grids.vPDF_z[damage_index] 
                             prob_dZ_true = vPi_S*grids.vPDF_z[damage_index] 
-                    mW[b_index,h_index,l_index]+=prob_dZ*ut.W_bequest(par,(1+par.r)*b+(1-par.dDelta-par.dKappa_sell-(1-dZ))*h*dP_C_prime-(1+par.r_m)*mortgage_start)
-                    mQ[b_index,h_index,l_index]+=prob_dZ*ut.Q_bequest(par, (1+par.r)*b+(1-par.dDelta-par.dKappa_sell-(1-dZ))*h*dP_C_prime-(1+par.r_m)*mortgage_start)
+                    mW[b_index,h_index,l_index]+=prob_dZ*ut.W_bequest(par,(1+par.r)*b+(1-par.dDelta-par.dKappa_sell-(1-dZ))*h*dP_C_prime-(1+mortgage_rate)*mortgage_start)
+                    mQ[b_index,h_index,l_index]+=prob_dZ*ut.Q_bequest(par, (1+par.r)*b+(1-par.dDelta-par.dKappa_sell-(1-dZ))*h*dP_C_prime-(1+mortgage_rate)*mortgage_start)
                     if welfare==True:
-                        mW_wf[b_index,h_index,l_index]+=prob_dZ_true*ut.W_bequest(par,(1+par.r)*b+(1-par.dDelta-par.dKappa_sell-(1-dZ))*h*dP_C_prime-(1+par.r_m)*mortgage_start)
+                        mW_wf[b_index,h_index,l_index]+=prob_dZ_true*ut.W_bequest(par,(1+par.r)*b+(1-par.dDelta-par.dKappa_sell-(1-dZ))*h*dP_C_prime-(1+mortgage_rate)*mortgage_start)
                   
                    
    
@@ -95,7 +100,11 @@ def solve_last_period_renters(par, grids):
     return par.dBeta*mW, par.dBeta*(1+par.r)*mQ, par.dBeta*mW
 
 @njit
-def solve_owners_C(par, grids, j_index, k_index, mMarkov, vPi_S, dPi_L, coastal_stayer_inputs,coastal_mover_inputs, dP_C_prime,mortgage_size_C, welfare):
+def solve_owners_C(par, grids, j_index, k_index, mMarkov, vPi_S, dPi_L, coastal_stayer_inputs,coastal_mover_inputs, dP_C_prime,mortgage_size_C, welfare, mortgage_premium = False):
+    if mortgage_premium == False:
+        mortgage_rate = par.r_m
+    elif mortgage_premium == True:
+        mortgage_rate = par.r_prem_C
    
     vt_stay_c_input = coastal_stayer_inputs['vt_stay_c_input']
     vt_renter_input = coastal_mover_inputs['vt_renter_input']
@@ -139,13 +148,13 @@ def solve_owners_C(par, grids, j_index, k_index, mMarkov, vPi_S, dPi_L, coastal_
                 ltv_minpay_index=0
             elif l_index>0:               
                 mortgage_start=mortgage_size_C[h_index,l_index]
-                mortgage_withint=(1+par.r_m)*mortgage_start
-                min_payment = (par.r_m*(1+par.r_m)**(par.iNj-j_index)/((1+par.r_m)**(par.iNj-j_index)-1))*mortgage_start
+                mortgage_withint=(1+mortgage_rate)*mortgage_start
+                min_payment = (mortgage_rate*(1+mortgage_rate)**(par.iNj-j_index)/((1+mortgage_rate)**(par.iNj-j_index)-1))*mortgage_start
                 ltv_minpay=(mortgage_withint-min_payment)/(house_value) 
                 ltv_minpay_index=misc.binary_search(0,grids.vL.size,grids.vL,ltv_minpay)                
                    
             for e_prime_index in range(grids.vE.size):     
-                max_mortgage_pti=grids.mPTI[j_index,e_prime_index]            
+                max_mortgage_pti=grids.mPTI_C[j_index,e_prime_index]            
                     
                 if grids.max_ltv<max_mortgage_pti/(house_value):
                     max_ltv_choice=grids.max_ltv
@@ -355,7 +364,7 @@ def solve_owners_NC(par, grids, j_index, k_index, mMarkov, noncoastal_stayer_inp
 
 
             for e_prime_index in range(grids.vE.size):
-                max_mortgage_pti=grids.mPTI[j_index,e_prime_index]                         
+                max_mortgage_pti=grids.mPTI_NC[j_index,e_prime_index]                         
                 if grids.max_ltv<max_mortgage_pti/(house_value):
                     max_ltv_choice=grids.max_ltv
                 else: 

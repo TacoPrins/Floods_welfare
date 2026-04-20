@@ -8,7 +8,7 @@ import utility_epsilons as ut
 import interp as interpfun
 
 @njit
-def solve(par, grids, j_index, k_index, g_index, e_index, dP, mVt_stayer, mC_pol_stayer, mVt_stayer_wf, welfare):
+def solve(par, grids, j_index, k_index, g_index, e_index, dP, max_mortgage_pti, mVt_stayer, mC_pol_stayer, mVt_stayer_wf, welfare):
     
     j=j_index
     g=grids.vG[g_index]
@@ -16,8 +16,6 @@ def solve(par, grids, j_index, k_index, g_index, e_index, dP, mVt_stayer, mC_pol
     mVt = np.ones((grids.vX.size))*-1e12
     mVt_wf = np.ones((grids.vX.size))*-1e12
     mQt = np.zeros((grids.vX.size))     
-    
-    max_mortgage_pti=grids.mPTI[j_index,e_index] 
 
     for x_index in range(grids.vX.size):
         x=grids.vX[x_index]

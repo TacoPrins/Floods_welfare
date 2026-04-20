@@ -1,14 +1,11 @@
-"par_epsilons.py"
+
 import numpy as np
 
 time_increment=2
 vPi_S_median=np.array([0.0194,    0.0198,    0.0202,    0.0206,    0.0210,    0.0214,    0.0218,    0.0222,    0.0226,    0.0230,    0.0234,    0.0239,    0.0243,
-                        0.0248,    0.0254,    0.0259,    0.0265,    0.0273,    0.0280,   0.0289,    0.0300,    0.0310,    0.0321,    0.0333,    0.0347,    0.0361,
+                       0.0248,    0.0254,    0.0259,    0.0265,    0.0273,    0.0280,   0.0289,    0.0300,    0.0310,    0.0321,    0.0333,    0.0347,    0.0361,
 0.0376,    0.0392,    0.0410,    0.0427,    0.0444,    0.0461,    0.0478,    0.0495,    0.0513,    0.0530,    0.0547,    0.0565,    0.0583,
 0.0601,    0.0619,    0.0637,    0.0654,    0.0672,    0.0690,    0.0708,    0.0726,    0.0744,    0.0762,    0.0780,    0.0798,    0.0816,    0.0816,    0.0816,    0.0816,    0.0816])
-
-
-# vPi_S_median=np.array([0.0194, 0.0198,    0.0202,    0.0206,    0.0210,    0.0214])
 
 
 
@@ -42,6 +39,7 @@ par_dict = {"time_increment": time_increment,
           "max_ltv": 0.95,
           "damage_states": 3,
           "dLambda": 0.8,
+          'wf_wedge': np.array([0.]),
           "dGamma": 1/1.25,
           "dSigma": 2,
           "b_bar":3.18164063,
@@ -51,7 +49,7 @@ par_dict = {"time_increment": time_increment,
           #"iNb_left_tail": 20,
           #"iNb_left": 50,
           #"iNb_right": 10,
-          "iNb":60,
+          "iNb":70,
           "iBmin": 0, 
           "iBmax": 27,
           "dZ":0.8,
@@ -68,7 +66,6 @@ par_dict = {"time_increment": time_increment,
           "iM":1,
           'vAgeEquiv':np.ones(50),
           'dNC_frac': 0.5,
-          'wf_wedge': np.array([0.]),
           'dC_frac': 0.5,
           'dTheta': 1.5/2.5, 
           'dL': 0.311,
@@ -84,6 +81,7 @@ par_dict = {"time_increment": time_increment,
           'beta4_age':  -2.505727467e-06, #=Coeff of age^4 for fitted line age --> mean log income 
           'corr_poswealth_income': 0.1984, #=Correlation between log income (in terms of sds away from the median) and log wealth conditional on wealth>0 in lowest age bracket
           'tau_0': 0.75,
-          'tau_1': 0.151
-
+          'tau_1': 0.151,
+          'building_rest': 0.5,
+          'r_prem_C': 1.06**time_increment-1, 
           }

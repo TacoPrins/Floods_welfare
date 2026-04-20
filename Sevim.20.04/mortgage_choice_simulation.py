@@ -5,7 +5,7 @@ import interp as interp
 from numba import njit
 
 @njit(fastmath=True)
-def solve(par,grids,vt_stay_input,j,h,e, dZ, dP,mortgage_start,max_ltv_cache_choice_index_left, min_payment, ltv_cache_minpay_index_left, selected_values_stay):
+def solve(par,grids,vt_stay_input,j,h,e, dZ, dP,mortgage_start,max_ltv_cache_choice_index_left, min_payment, ltv_cache_minpay_index_left, selected_values_stay, mortgage_rate):
         
     #Initialise value from paying off more than the minimum and refinancing
     vt_stay=np.ones((grids.vM_sim.size))*-1e12
@@ -13,7 +13,7 @@ def solve(par,grids,vt_stay_input,j,h,e, dZ, dP,mortgage_start,max_ltv_cache_cho
     m_out=np.empty((grids.vM_sim.size))
     
     #Some helper variables to prevent unnecessary computations    
-    mortgage_withint=(1+par.r_m)*mortgage_start
+    mortgage_withint=(1+mortgage_rate)*mortgage_start
     house_value=h*dP
     depreciation=((1-dZ)+par.dDelta)*house_value
     
