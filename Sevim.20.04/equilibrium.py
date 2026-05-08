@@ -104,7 +104,7 @@ def generate_pricepath(grids, par, func, mMarkov, vCoeff_in_C,vCoeff_in_NC, dP_C
         print("Time step:",t_index)
         if t_index<nperiods-1:
             #start=time.perf_counter()
-            mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C1, stock_demand_rental_NC1, vcoastal_beq[t_index], vnoncoastal_beq[t_index], vsavings_beq[t_index], _, coastal_mass_J, noncoastal_mass_J, renter_mass_J = sim.update_dist_continuous(sceptics, False, 0, func, grids, par, t_index, mMarkov, par.iNj, mDist0_c, mDist0_nc, mDist0_renter, price_history[t_index,0], price_history[t_index,1], vt_stay_c[t_index,], vt_stay_nc[t_index,],  vt_renter[t_index,], b_stay_c[t_index,], b_stay_nc[t_index,], b_renter[t_index,],  coastal_beq0, noncoastal_beq0, savings_beq0,vCoeff_in_C,vCoeff_in_NC, dP_C_lag, dP_NC_lag, mortgage_premium=mortgage_premium)
+            mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C1, stock_demand_rental_NC1, vcoastal_beq[t_index], vnoncoastal_beq[t_index], vsavings_beq[t_index], _, coastal_mass_J, noncoastal_mass_J, renter_mass_J = sim.update_dist_continuous(sceptics, False, 0, func, grids, par, t_index, mMarkov, par.iNj, mDist0_c, mDist0_nc, mDist0_renter, price_history[t_index,0], price_history[t_index,1], vt_stay_c[t_index,], vt_stay_nc[t_index,],  vt_renter[t_index,], b_stay_c[t_index,], b_stay_nc[t_index,], b_renter[t_index,],  coastal_beq0, noncoastal_beq0, savings_beq0,vCoeff_in_C,vCoeff_in_NC, dP_C_lag, dP_NC_lag, building_rest=building_rest, mortgage_premium=mortgage_premium)
             dP_C_lag=price_history[t_index,0]
             dP_NC_lag=price_history[t_index,1]
             #end=time.perf_counter() 
@@ -139,6 +139,12 @@ def find_coefficients(par, grids, method, sceptics, iNj, mMarkov, vCoeff_C, vCoe
 
     
     func=False
+    if sceptics == True:
+        k_dim = 2
+    else:
+        k_dim = 1
+    
+    zero_mass_J = np.zeros(k_dim)
 
     for it in range(0, max_it):
         
@@ -150,7 +156,7 @@ def find_coefficients(par, grids, method, sceptics, iNj, mMarkov, vCoeff_C, vCoe
         # given value functions, find no flooding stationary distribution given initial alpha
         iT = grids.vTime.size
         
-        price_history, _, _, _, _, _, _, _, _, vt_stay_c, vt_stay_nc, vt_renter, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf,_,_,_ =generate_pricepath(grids, par, func, mMarkov, vCoeff_in_C,vCoeff_in_NC, dP_C_initial, dP_NC_initial, mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, 0,0,0,method,sceptics, building_rest = building_rest, mortgage_premium = mortgage_premium)
+        price_history, _, _, _, _, _, _, _, _, vt_stay_c, vt_stay_nc, vt_renter, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf,_,_,_ =generate_pricepath(grids, par, func, mMarkov, vCoeff_in_C,vCoeff_in_NC, dP_C_initial, dP_NC_initial, mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, zero_mass_J, zero_mass_J, zero_mass_J, method,sceptics, building_rest = building_rest, mortgage_premium = mortgage_premium)
               
         vCoeff_C, vCoeff_NC, rho, dP_C_vec, dP_NC_vec=coeff_updater(par, grids, price_history, vCoeff_in_C, vCoeff_in_NC, iT)
                 

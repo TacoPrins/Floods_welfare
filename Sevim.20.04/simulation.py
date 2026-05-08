@@ -108,6 +108,11 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
     default_stock_NC=0
     dPi_S=grids.vPi_S_median[t_index]   
     
+    if building_rest == True:
+        cost_shifter = par.building_rest_cost
+    else:
+        cost_shifter = 0
+    
     if sceptics==False:
         k_dim=1 
     else:
@@ -137,11 +142,23 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
     
     rental_price_lom_C=par.dPsi+max(dP_C_lom -(1-par.dDelta-coastal_damage_frac)/(1+par.r)*dP_C_prime_lom,0)
     rental_price_lom_NC=par.dPsi+max(dP_NC_lom -(1-par.dDelta)/(1+par.r)*dP_NC_prime_lom,0)
+    
+    mortgage_rate_nc=par.r_m_nc
     if mortgage_premium == False:
-        mortgage_rate_c = par.r_m
+        mortgage_rate_c = par.r_m_c
     elif mortgage_premium == True:
-        mortgage_rate_c = par.r_prem_C
+        mortgage_rate_c = par.r_m_c_experiment 
+    
+    if building_rest == True:
+        arrival_rate_discount = (1-par.dDelta)**grids.vTime[t_index] + (1-(1-par.dDelta)**grids.vTime[t_index])*(1-par.dMitigation_rate)
+    else:
+        arrival_rate_discount = 1 
+    
+    
     minpay_matrix_C, ltv_minpay_index_left_C, minpay_matrix_NC, ltv_minpay_index_left_NC, max_ltv_C,max_ltv_NC, max_ltv_index_C, max_ltv_index_NC=mortgage_matrix_solve(par, grids, dP_C_lag, dP_NC_lag, dP_C, dP_NC, mortgage_rate_c)
+    
+    
+    
     
     housing_bequest=coastal_beq*(1-coastal_damage_frac-par.dDelta)*dP_C + noncoastal_beq*(1-par.dDelta)*dP_NC
     total_bequest = (housing_bequest+savings_beq*(1+par.r))*par.iNj
@@ -182,19 +199,19 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
                                 #Prices to calculate beginning of period mortgage
                                 
                                 mortgage_start=ltv*h*dP_C_lag                                 
-                                e, mortgage_rebate=misc.net_income(par, grids, j, e_index, e_trans_index, mortgage_start) 
+                                e, mortgage_rebate=misc.net_income(par, grids, j, e_index, e_trans_index, mortgage_start, mortgage_rate_c) 
 
                                 for damage_index in range(grids.vZ.size):
-                                    dZ = grids.vZ[damage_index]                                    
+                                    dZ = grids.vZ[damage_index]                               
                                     if damage_index==0:
-                                        prob_dZ=(1-dPi_S)
+                                        prob_dZ=(1-dPi_S*arrival_rate_discount)
                                     else:                                    
-                                        prob_dZ = dPi_S*grids.vPDF_z[damage_index] 
+                                        prob_dZ = dPi_S*arrival_rate_discount*grids.vPDF_z[damage_index] 
                                     for m_index_sim in range(grids.vM_sim.size):                                              
                                         mass[m_index_sim] = income_mass*prob_dZ*mDist0_c[j,k_index,g_index,m_index_sim,h_index,l_index_sim,e_index]
                                     mass_pos_idx=np.where(mass>0)[0]                               
                                     #For stayers, interpolate value function at cash in hand 
-                                    vt_stay_c_sim= mortgage_sim_exc.solve(par,grids,vt_stay_c_input[:,h_index,:],j,h, e, dZ, dP_C,mortgage_start,max_ltv_index_C[j,h_index,e_index], minpay_matrix_C[j, h_index, l_index_sim], ltv_minpay_index_left_C[j, h_index, l_index_sim],mass_pos_idx) 
+                                    vt_stay_c_sim= mortgage_sim_exc.solve(par,grids,vt_stay_c_input[:,h_index,:],j,h, e, dZ, dP_C,mortgage_start,max_ltv_index_C[j,h_index,e_index], minpay_matrix_C[j, h_index, l_index_sim], ltv_minpay_index_left_C[j, h_index, l_index_sim],mass_pos_idx, mortgage_rate_c) 
                                     x_sell_vec=grids.vM_sim+e+(1-(1-dZ)-par.dDelta-par.dKappa_sell)*h*dP_C-(1+mortgage_rate_c)*mortgage_start
                                     vt_buy_c, h_pol_C, _, _,_ =buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_C, vt_stay_c_input,dP_C_lom,max_ltv_C[j,:,e_index],max_ltv_index_C[j,:,e_index],mass_pos_idx)
                                     vt_buy_nc, h_pol_NC, _, _,_ =buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_NC, vt_stay_nc_input,dP_NC_lom,max_ltv_NC[j,:,e_index],max_ltv_index_NC[j,:,e_index],mass_pos_idx)
@@ -230,18 +247,18 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
                                 ltv=grids.vL_sim[l_index_sim]
                              
                                 mortgage_start=ltv*h*dP_NC_lag                                    
-                                e, mortgage_rebate=misc.net_income(par, grids, j, e_index, e_trans_index, mortgage_start) 
+                                e, mortgage_rebate=misc.net_income(par, grids, j, e_index, e_trans_index, mortgage_start, mortgage_rate_nc) 
 
                                 for m_index_sim in range(grids.vM_sim.size):                                            
                                     mass[m_index_sim] = income_mass*mDist0_nc[j,k_index,g_index,m_index_sim,h_index,l_index_sim,e_index]
                                 mass_pos_idx=np.where(mass>0)[0]
-                                vt_stay_nc_sim= mortgage_sim_exc.solve(par,grids,vt_stay_nc_input[:,h_index,:],j,h, e,1, dP_NC,mortgage_start,max_ltv_index_NC[j,h_index,e_index], minpay_matrix_NC[j, h_index, l_index_sim], ltv_minpay_index_left_NC[j, h_index, l_index_sim],mass_pos_idx)
-                                x_sell_vec = grids.vM_sim+e+(1-par.dDelta-par.dKappa_sell)*h*dP_NC-(1+par.r_m)*mortgage_start
+                                vt_stay_nc_sim= mortgage_sim_exc.solve(par,grids,vt_stay_nc_input[:,h_index,:],j,h, e,1, dP_NC,mortgage_start,max_ltv_index_NC[j,h_index,e_index], minpay_matrix_NC[j, h_index, l_index_sim], ltv_minpay_index_left_NC[j, h_index, l_index_sim],mass_pos_idx, mortgage_rate_nc)
+                                x_sell_vec = grids.vM_sim+e+(1-par.dDelta-par.dKappa_sell)*h*dP_NC-(1+par.r_m_nc)*mortgage_start
                                 vt_buy_c, h_pol_C, _, _,_ =buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_C, vt_stay_c_input,dP_C_lom,max_ltv_C[j,:,e_index],max_ltv_index_C[j,:,e_index],mass_pos_idx)
                                 vt_buy_nc, h_pol_NC, _, _,_ =buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_NC, vt_stay_nc_input,dP_NC_lom,max_ltv_NC[j,:,e_index],max_ltv_index_NC[j,:,e_index],mass_pos_idx)
                                              
                                 vt_renter_sim, h_renter = renter_sim_demand(False, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter,x_sell_vec, mass_pos_idx)
-                                if (1+par.r_m)*mortgage_start>(1-par.dDelta-par.dKappa_sell)*h*dP_NC:
+                                if (1+par.r_m_nc)*mortgage_start>(1-par.dDelta-par.dKappa_sell)*h*dP_NC:
                                     vt_default, h_default = renter_sim_demand(True, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
                                 else:
                                     vt_default=np.ones(grids.vM_sim.size)*-1e12
@@ -267,7 +284,7 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
                         for x_index_sim in range(grids.vX_sim.size):                             
                             mass[x_index_sim] = income_mass*mDist0_renter[j,k_index,g_index,x_index_sim,e_index]
                         mass_pos_idx=np.where(mass>0)[0]                    
-                        e, mortgage_rebate=misc.net_income(par, grids, j, e_index, e_trans_index, 0) 
+                        e, mortgage_rebate=misc.net_income(par, grids, j, e_index, e_trans_index, 0, 0) 
 
                         vt_buy_c, h_pol_C, _, _,_ =buy_sim.solve(par, grids,-1,grids.vX_sim+e, j, dP_C, vt_stay_c_input,dP_C_lom,max_ltv_C[j,:,e_index],max_ltv_index_C[j,:,e_index],mass_pos_idx)
                         vt_buy_nc, h_pol_NC, _, _,_ =buy_sim.solve(par, grids,-1,grids.vX_sim+e, j, dP_NC, vt_stay_nc_input,dP_NC_lom,max_ltv_NC[j,:,e_index],max_ltv_index_NC[j,:,e_index],mass_pos_idx)
@@ -288,11 +305,8 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
     net_demand_C=demand_C-supply_C
     net_demand_NC=demand_NC-supply_NC
     
-    if building_rest == False:
-        investment_C = (par.dTheta*dP_C)**(par.dTheta/(1-par.dTheta))*par.dC_frac*par.dL
-    elif building_rest == True:
-        investment_C = (par.dTheta*dP_C)**(par.dTheta/(1-par.dTheta))*par.dC_frac*(par.dL*(1-par.building_rest))
-        
+
+    investment_C = (par.dTheta*dP_C)**(par.dTheta/(1-par.dTheta))*par.dC_frac*(par.dL)*(1+cost_shifter)**(par.dTheta/(par.dTheta-1))        
     investment_NC = (par.dTheta*dP_NC)**(par.dTheta/(1-par.dTheta))*par.dNC_frac*par.dL
  
       
@@ -330,7 +344,7 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
 
 
 @njit
-def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_index, mMarkov, iNj, mDist0_c, mDist0_nc, mDist0_renter, dP_C, dP_NC, vt_stay_c, vt_stay_nc,  vt_renter, b_stay_c, b_stay_nc, b_renter,  coastal_beq, noncoastal_beq, savings_beq,vCoeff_in_C,vCoeff_in_NC, dP_C_lag, dP_NC_lag, mortgage_premium = False):
+def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_index, mMarkov, iNj, mDist0_c, mDist0_nc, mDist0_renter, dP_C, dP_NC, vt_stay_c, vt_stay_nc,  vt_renter, b_stay_c, b_stay_nc, b_renter,  coastal_beq, noncoastal_beq, savings_beq,vCoeff_in_C,vCoeff_in_NC, dP_C_lag, dP_NC_lag, building_rest = False,mortgage_premium = False):
     
     default_mass_rational=0
     default_mass_sceptic=0
@@ -406,14 +420,19 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
     savings_beq = 0
     no_beq=0    
       
+    mortgage_rate_nc=par.r_m_nc
     if mortgage_premium == False:
-        mortgage_rate_c = par.r_m
+        mortgage_rate_c = par.r_m_c
     elif mortgage_premium == True:
-        mortgage_rate_c = par.r_prem_C  
+        mortgage_rate_c = par.r_m_c_experiment 
         
     minpay_matrix_C, ltv_minpay_index_left_C, minpay_matrix_NC, ltv_minpay_index_left_NC, max_ltv_C,max_ltv_NC, max_ltv_index_C, max_ltv_index_NC=mortgage_matrix_solve(par, grids, dP_C_lag, dP_NC_lag, dP_C, dP_NC, mortgage_rate_c)
 
-    
+    if building_rest == True:
+        arrival_rate_discount = (1-par.dDelta)**grids.vTime[t_index] + (1-(1-par.dDelta)**grids.vTime[t_index])*(1-par.dMitigation_rate)
+    else:
+        arrival_rate_discount = 1     
+
     #Initialise since may not be filled in the function
     mass=np.empty((grids.vM_sim.size))  
     
@@ -443,21 +462,21 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
                                 ltv=grids.vL_sim[l_index_sim]
                                 #Prices to calculate beginning of period mortgage
                                 mortgage_start=ltv*h*dP_C_lag
-                                e, mortgage_rebate=misc.net_income(par, grids, j, e_index, e_trans_index, mortgage_start) 
+                                e, mortgage_rebate=misc.net_income(par, grids, j, e_index, e_trans_index, mortgage_start, mortgage_rate_c) 
 
                                 for damage_index in range(grids.vZ.size):
                                     dZ = grids.vZ[damage_index]                                    
                                     if damage_index==0:
-                                        prob_dZ=(1-dPi_S)
+                                        prob_dZ=(1-dPi_S*arrival_rate_discount)
                                     else:                                    
-                                        prob_dZ = dPi_S*grids.vPDF_z[damage_index] 
+                                        prob_dZ = dPi_S*arrival_rate_discount*grids.vPDF_z[damage_index] 
                                     
                                     for m_index_sim in range(grids.vM_sim.size):                                              
                                         mass[m_index_sim] = income_mass*prob_dZ*mDist0_c[j,k_index,g_index,m_index_sim,h_index,l_index_sim,e_index]
                                     mass_pos_idx=np.where(mass>0)[0]                               
                                     #For stayers, interpolate value function at cash in hand 
                                                                         
-                                    vt_stay_c_sim,ltv_stay_c_sim,m_out= mortgage_sim.solve(par,grids,vt_stay_c_input[:,h_index,:],j,h, e, dZ,dP_C,mortgage_start,max_ltv_index_C[j,h_index,e_index], minpay_matrix_C[j, h_index, l_index_sim], ltv_minpay_index_left_C[j, h_index, l_index_sim],mass_pos_idx) 
+                                    vt_stay_c_sim,ltv_stay_c_sim,m_out= mortgage_sim.solve(par,grids,vt_stay_c_input[:,h_index,:],j,h, e, dZ,dP_C,mortgage_start,max_ltv_index_C[j,h_index,e_index], minpay_matrix_C[j, h_index, l_index_sim], ltv_minpay_index_left_C[j, h_index, l_index_sim],mass_pos_idx, mortgage_rate_c) 
                                                                       
                                     
                                     x_sell_vec=grids.vM_sim+e+(1-(1-dZ)-par.dDelta-par.dKappa_sell)*h*dP_C-(1+mortgage_rate_c)*mortgage_start
@@ -511,20 +530,20 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
                     # noncoastal homeowners
 
                                 mortgage_start=ltv*h*dP_NC_lag
-                                e, mortgage_rebate=misc.net_income(par, grids, j, e_index, e_trans_index, mortgage_start) 
+                                e, mortgage_rebate=misc.net_income(par, grids, j, e_index, e_trans_index, mortgage_start, mortgage_rate_nc) 
 
                                 for m_index_sim in range(grids.vM_sim.size):                                            
                                     mass[m_index_sim] = income_mass*mDist0_nc[j,k_index,g_index,m_index_sim,h_index,l_index_sim,e_index]
                                 mass_pos_idx=np.where(mass>0)[0]
-                                vt_stay_nc_sim,ltv_stay_nc_sim,m_out= mortgage_sim.solve(par,grids,vt_stay_nc_input[:,h_index,:],j,h, e, 1, dP_NC,mortgage_start,max_ltv_index_NC[j,h_index,e_index], minpay_matrix_NC[j, h_index, l_index_sim], ltv_minpay_index_left_NC[j, h_index, l_index_sim],mass_pos_idx)
+                                vt_stay_nc_sim,ltv_stay_nc_sim,m_out= mortgage_sim.solve(par,grids,vt_stay_nc_input[:,h_index,:],j,h, e, 1, dP_NC,mortgage_start,max_ltv_index_NC[j,h_index,e_index], minpay_matrix_NC[j, h_index, l_index_sim], ltv_minpay_index_left_NC[j, h_index, l_index_sim],mass_pos_idx, mortgage_rate_nc)
                                                                
                                 
-                                x_sell_vec = grids.vM_sim+e+(1-par.dDelta-par.dKappa_sell)*h*dP_NC-(1+par.r_m)*mortgage_start
+                                x_sell_vec = grids.vM_sim+e+(1-par.dDelta-par.dKappa_sell)*h*dP_NC-(1+par.r_m_nc)*mortgage_start
                                 vt_buy_c, _, h_pol_C_index,ltv_pol_C_max, ltv_pol_C_index=buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_C, vt_stay_c_input,dP_C_lom,max_ltv_C[j,:,e_index],max_ltv_index_C[j,:,e_index],mass_pos_idx)
                                 vt_buy_nc, _, h_pol_NC_index,ltv_pol_NC_max,ltv_pol_NC_index =buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_NC, vt_stay_nc_input,dP_NC_lom,max_ltv_NC[j,:,e_index],max_ltv_index_NC[j,:,e_index],mass_pos_idx)
                                            
                                 vt_renter_sim = renter_sim(False, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter,x_sell_vec, mass_pos_idx)
-                                if (1+par.r_m)*mortgage_start>(1-par.dDelta-par.dKappa_sell)*h*dP_NC:
+                                if (1+par.r_m_nc)*mortgage_start>(1-par.dDelta-par.dKappa_sell)*h*dP_NC:
                                     vt_default = renter_sim(True, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
                                 else:
                                     vt_default=np.ones(grids.vM_sim.size)*-1e12
@@ -569,7 +588,7 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
                                             renter_mass_J[k_index]+=mass_default[m_index_sim]     
                     
                # renters      
-                        e, mortgage_rebate=misc.net_income(par, grids, j, e_index, e_trans_index, 0) 
+                        e, mortgage_rebate=misc.net_income(par, grids, j, e_index, e_trans_index, 0, 0) 
 
                         for x_index_sim in range(grids.vX_sim.size):                             
                             mass[x_index_sim] = income_mass*mDist0_renter[j,k_index,g_index,x_index_sim,e_index]
@@ -1110,27 +1129,28 @@ def mortgage_matrix_solve(par, grids, dP_C_lag, dP_NC_lag, dP_C, dP_NC, mortgage
                 ltv_minpay_index_left_C[j, h_index, l_index_sim]=misc.binary_search(0,grids.vL_sim.size,grids.vL_sim,ltv_minpay_C)
                 
                 mortgage_start_NC=ltv*h*dP_NC_lag
-                minpay_matrix_NC[j, h_index, l_index_sim] = (par.r_m*(1+par.r_m)**(par.iNj-j)/((1+par.r_m)**(par.iNj-j)-1))*mortgage_start_NC
-                ltv_minpay_NC=((1+par.r_m)*mortgage_start_NC-minpay_matrix_NC[j,h_index, l_index_sim])/(dP_NC*h)     
+                minpay_matrix_NC[j, h_index, l_index_sim] = (par.r_m_nc*(1+par.r_m_nc)**(par.iNj-j)/((1+par.r_m_nc)**(par.iNj-j)-1))*mortgage_start_NC
+                ltv_minpay_NC=((1+par.r_m_nc)*mortgage_start_NC-minpay_matrix_NC[j,h_index, l_index_sim])/(dP_NC*h)     
                 ltv_minpay_index_left_NC[j, h_index, l_index_sim]=misc.binary_search(0,grids.vL_sim.size,grids.vL_sim,ltv_minpay_NC)
 
     
     for j in range(par.iNj-1):
         #Last period not allowed to take out mortgages
         for e_index in range(grids.vE.size):
-             max_mortgage_pti=grids.mPTI[j,e_index]
+             max_mortgage_pti_C=grids.mPTI_C[j,e_index]
+             max_mortgage_pti_NC=grids.mPTI_NC[j,e_index]
                  # coastal homeowners
              for h_index in range(grids.vH.size):
                  h = grids.vH[h_index]
-                 if grids.max_ltv<max_mortgage_pti/(dP_C*h):
+                 if grids.max_ltv<max_mortgage_pti_C/(dP_C*h):
                      max_ltv_C[j,h_index,e_index]=grids.max_ltv
                  else: 
-                     max_ltv_C[j,h_index,e_index]=max_mortgage_pti/(dP_C*h)                
+                     max_ltv_C[j,h_index,e_index]=max_mortgage_pti_C/(dP_C*h)                
                  max_ltv_index_C[j,h_index,e_index] = misc.binary_search(0,grids.vL_sim.size,grids.vL_sim,max_ltv_C[j,h_index,e_index]) 
-                 if grids.max_ltv<max_mortgage_pti/(dP_NC*h):
+                 if grids.max_ltv<max_mortgage_pti_NC/(dP_NC*h):
                      max_ltv_NC[j,h_index,e_index]=grids.max_ltv
                  else: 
-                     max_ltv_NC[j,h_index,e_index]=max_mortgage_pti/(dP_NC*h)                  
+                     max_ltv_NC[j,h_index,e_index]=max_mortgage_pti_NC/(dP_NC*h)                  
                  max_ltv_index_NC[j,h_index,e_index] = misc.binary_search(0,grids.vL_sim.size,grids.vL_sim,max_ltv_NC[j,h_index,e_index]) 
              
     return minpay_matrix_C, ltv_minpay_index_left_C, minpay_matrix_NC, ltv_minpay_index_left_NC, max_ltv_C,max_ltv_NC, max_ltv_index_C, max_ltv_index_NC

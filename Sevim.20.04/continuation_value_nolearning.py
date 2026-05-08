@@ -14,13 +14,14 @@ import interp as interp
 def solve_last_period_owners_C(par, grids,  vPi_S, dPi_L, k_index, dP_C_prime,mortgage_size_C, welfare, mortgage_premium = False):
     
     if mortgage_premium == False:
-        mortgage_rate = par.r_m
+        mortgage_rate = par.r_m_c
     elif mortgage_premium == True:
-        mortgage_rate = par.r_prem_C
+        mortgage_rate = par.r_m_c_experiment 
     
     mW = np.zeros((grids.vB.size, grids.vH.size, grids.vL.size))
     mW_wf = np.zeros((grids.vB.size, grids.vH.size, grids.vL.size))
     mQ = np.zeros((grids.vB.size, grids.vH.size, grids.vL.size))
+        
         
     
     for h_index in range(grids.vH.size):
@@ -70,8 +71,8 @@ def solve_last_period_owners_NC(par, grids, k_index, dP_NC_prime,mortgage_size_N
             b=grids.vB[b_index]
             for l_index in range(grids.vL.size):
                 mortgage_start=mortgage_size_NC[h_index,l_index]                
-                mW[b_index,h_index,l_index]=ut.W_bequest(par,(1+par.r)*b+(1-par.dDelta-par.dKappa_sell)*h*dP_NC_prime-(1+par.r_m)*mortgage_start)
-                mQ[b_index,h_index,l_index]=ut.Q_bequest(par, (1+par.r)*b+(1-par.dDelta-par.dKappa_sell)*h*dP_NC_prime-(1+par.r_m)*mortgage_start)
+                mW[b_index,h_index,l_index]=ut.W_bequest(par,(1+par.r)*b+(1-par.dDelta-par.dKappa_sell)*h*dP_NC_prime-(1+par.r_m_nc)*mortgage_start)
+                mQ[b_index,h_index,l_index]=ut.Q_bequest(par, (1+par.r)*b+(1-par.dDelta-par.dKappa_sell)*h*dP_NC_prime-(1+par.r_m_nc)*mortgage_start)
                   
       
     assert np.isnan(mW).sum() == 0
@@ -102,9 +103,9 @@ def solve_last_period_renters(par, grids):
 @njit
 def solve_owners_C(par, grids, j_index, k_index, mMarkov, vPi_S, dPi_L, coastal_stayer_inputs,coastal_mover_inputs, dP_C_prime,mortgage_size_C, welfare, mortgage_premium = False):
     if mortgage_premium == False:
-        mortgage_rate = par.r_m
+        mortgage_rate = par.r_m_c
     elif mortgage_premium == True:
-        mortgage_rate = par.r_prem_C
+        mortgage_rate = par.r_m_c_experiment 
    
     vt_stay_c_input = coastal_stayer_inputs['vt_stay_c_input']
     vt_renter_input = coastal_mover_inputs['vt_renter_input']
@@ -134,8 +135,8 @@ def solve_owners_C(par, grids, j_index, k_index, mMarkov, vPi_S, dPi_L, coastal_
     mW = np.zeros((grids.vB.size, grids.vH.size, grids.vL.size, grids.vE.size))
     mW_wf = np.zeros((grids.vB.size, grids.vH.size, grids.vL.size, grids.vE.size))
     mQ = np.zeros((grids.vB.size, grids.vH.size, grids.vL.size, grids.vE.size))
+ 
   
-    
     for h_index in range(grids.vH.size):
         h=grids.vH[h_index]       
         house_value=h*dP_C_prime          
@@ -163,7 +164,7 @@ def solve_owners_C(par, grids, j_index, k_index, mMarkov, vPi_S, dPi_L, coastal_
                 max_ltv_choice_index=misc.binary_search(0,grids.vL.size,grids.vL,max_ltv_choice)
                     
                 for e_trans_index in range(grids.vE_trans.size):
-                    e_prime, mortgage_rebate=misc.net_income(par, grids, j_index, e_prime_index, e_trans_index, mortgage_start)
+                    e_prime, mortgage_rebate=misc.net_income(par, grids, j_index, e_prime_index, e_trans_index, mortgage_start, mortgage_rate)
                     if e_trans_index>0:
                         continue
                     for b_index in range(grids.vB.size):
@@ -340,7 +341,8 @@ def solve_owners_NC(par, grids, j_index, k_index, mMarkov, noncoastal_stayer_inp
     mW = np.zeros((grids.vB.size, grids.vH.size, grids.vL.size, grids.vE.size))
     mW_wf = np.zeros((grids.vB.size, grids.vH.size, grids.vL.size, grids.vE.size))
     mQ = np.zeros((grids.vB.size, grids.vH.size, grids.vL.size, grids.vE.size))
-
+    
+    mortgage_rate=par.r_m_nc
        
     for h_index in range(grids.vH.size):
         h=grids.vH[h_index]         
@@ -357,8 +359,8 @@ def solve_owners_NC(par, grids, j_index, k_index, mMarkov, noncoastal_stayer_inp
                 ltv_minpay_index=0
             elif l_index>0: 
                 mortgage_start=mortgage_size_NC[h_index,l_index]
-                min_payment = (par.r_m*(1+par.r_m)**(par.iNj-j_index)/((1+par.r_m)**(par.iNj-j_index)-1))*mortgage_start
-                mortgage_withint=(1+par.r_m)*mortgage_start
+                min_payment = (par.r_m_nc*(1+par.r_m_nc)**(par.iNj-j_index)/((1+par.r_m_nc)**(par.iNj-j_index)-1))*mortgage_start
+                mortgage_withint=(1+par.r_m_nc)*mortgage_start
                 ltv_minpay=(mortgage_withint-min_payment)/(house_value) 
                 ltv_minpay_index=misc.binary_search(0,grids.vL.size,grids.vL,ltv_minpay)
 
@@ -374,7 +376,7 @@ def solve_owners_NC(par, grids, j_index, k_index, mMarkov, noncoastal_stayer_inp
 
                 
                 for e_trans_index in range(grids.vE_trans.size):    
-                    e_prime, mortgage_rebate =misc.net_income(par, grids, j_index, e_prime_index, e_trans_index, mortgage_start)
+                    e_prime, mortgage_rebate =misc.net_income(par, grids, j_index, e_prime_index, e_trans_index, mortgage_start, mortgage_rate)
                     if e_trans_index>0:
                         continue            
                     for b_index in range(grids.vB.size):
@@ -533,7 +535,7 @@ def solve_renters(par, grids, j_index, k_index, mMarkov, renter_inputs, welfare)
    
     for e_prime_index in range(grids.vE.size):
         for e_trans_index in range(grids.vE_trans.size):                                                
-            e_prime, mortgage_rebate =misc.net_income(par, grids, j_index, e_prime_index, e_trans_index, 0)
+            e_prime, mortgage_rebate =misc.net_income(par, grids, j_index, e_prime_index, e_trans_index, 0, 0)
             if e_trans_index>0:
                 continue                     
             for b_index in range(grids.vB.size):

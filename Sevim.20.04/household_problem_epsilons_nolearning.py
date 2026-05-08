@@ -24,7 +24,7 @@ import misc_functions as misc
 
 
 @njit
-def solve(grids, par, iNj, mMarkov,vCoeff_C,vCoeff_NC, sceptics=True, welfare=True, mortgage_premium = False):
+def solve(grids, par, iNj, mMarkov,vCoeff_C,vCoeff_NC, sceptics=True, welfare=True, building_rest = False, mortgage_premium = False):
     if sceptics==False:
         k_dim=1
     else:
@@ -64,9 +64,15 @@ def solve(grids, par, iNj, mMarkov,vCoeff_C,vCoeff_NC, sceptics=True, welfare=Tr
     mortgage_size_C = np.zeros((grids.vH.size,grids.vL.size), dtype = np.float64)
     mortgage_size_NC= np.zeros((grids.vH.size,grids.vL.size), dtype = np.float64)
     type_mat = misc.DoubleGrid(np.linspace(0, k_dim-1, k_dim), np.linspace(0, grids.vG.size-1, grids.vG.size))
+
     
     g_index_nc=int((grids.vG.size-1)/2)
     assert grids.vG[g_index_nc]==1
+    
+    if building_rest == True:
+        arrival_rate_discount = (1-par.dDelta)**grids.vTime + (1-(1-par.dDelta)**grids.vTime)*(1-par.dMitigation_rate)
+    else:
+        arrival_rate_discount = np.ones((grids.vTime.size))
     
     for type_index in range(type_mat.shape[0]):
         k_index = int(type_mat[type_index, 0])
@@ -92,7 +98,7 @@ def solve(grids, par, iNj, mMarkov,vCoeff_C,vCoeff_NC, sceptics=True, welfare=Tr
                     mortgage_size_NC[h_index,l_index]=grids.vL[l_index]*grids.vH[h_index]*dP_NC
             for j in range(iNj-1, -1, -1):
                 if j == iNj-1:
-                    w_c_last,q_c_last, w_c_wf_last = continuation_value_epsilons.solve_last_period_owners_C(par, grids,  dPi_S, dPi_L, k_index, dP_C_prime,mortgage_size_C, welfare, mortgage_premium)
+                    w_c_last,q_c_last, w_c_wf_last = continuation_value_epsilons.solve_last_period_owners_C(par, grids,  dPi_S*arrival_rate_discount[t_index], dPi_L, k_index, dP_C_prime,mortgage_size_C, welfare, mortgage_premium)
                     w_nc_last,q_nc_last, w_nc_wf_last  = continuation_value_epsilons.solve_last_period_owners_NC(par, grids,  k_index,  dP_NC_prime,mortgage_size_NC, welfare)
                     w_renter_last,q_renter_last, w_renter_wf_last = continuation_value_epsilons.solve_last_period_renters(par, grids)
                 else:
@@ -107,7 +113,7 @@ def solve(grids, par, iNj, mMarkov,vCoeff_C,vCoeff_NC, sceptics=True, welfare=Tr
                     
 
                     
-                    w_c_vE,q_c_vE, w_c_wf_vE, v_owner_c_wf[t_index_prime,j+1, k_index,g_index,:,:,:,:] = continuation_value_epsilons.solve_owners_C(par, grids,  j+1, k_index, mMarkov, dPi_S, dPi_L, coastal_stayer_inputs,mover_inputs,dP_C_prime, mortgage_size_C, welfare, mortgage_premium)
+                    w_c_vE,q_c_vE, w_c_wf_vE, v_owner_c_wf[t_index_prime,j+1, k_index,g_index,:,:,:,:] = continuation_value_epsilons.solve_owners_C(par, grids,  j+1, k_index, mMarkov, dPi_S*arrival_rate_discount[t_index], dPi_L, coastal_stayer_inputs,mover_inputs,dP_C_prime, mortgage_size_C, welfare, mortgage_premium)
                     w_nc_vE,q_nc_vE, w_nc_wf_vE,  v_owner_nc_wf[t_index_prime,j+1, k_index,g_index,:,:,:,:]  = continuation_value_epsilons.solve_owners_NC(par, grids,  j+1, k_index, mMarkov, noncoastal_stayer_inputs,mover_inputs, dP_NC_prime,  mortgage_size_NC, welfare)
                     w_renter_vE,q_renter_vE, w_renter_wf_vE, v_nonowner_wf[t_index_prime,j+1, k_index,g_index,:,:] = continuation_value_epsilons.solve_renters(par, grids,  j+1, k_index, mMarkov, mover_inputs, welfare)
                                                              
@@ -218,7 +224,7 @@ def solve_ss(grids, par, iNj, mMarkov,dCoeff_C, dCoeff_NC, initial = True, scept
             
     g_index_nc=int((grids.vG.size-1)/2)
     assert grids.vG[g_index_nc]==1
-    
+
     if initial:
         dPi_L=grids.vPi_L[0]
         t_index=0
@@ -268,8 +274,8 @@ def solve_ss(grids, par, iNj, mMarkov,dCoeff_C, dCoeff_NC, initial = True, scept
                     vt_stay_nc[0,j, k_index,g_index,:,:,:,e_index], c_nc[0,j, k_index,g_index,:,:,:,e_index],  qt_stay_nc[0,j, k_index,g_index,:,:,:,e_index], b_stay_nc[0,j, k_index,g_index,:,:,:,e_index], vt_stay_nc_wf[0,j, k_index,g_index,:,:,:,e_index] = stayer_problem.solve(par, grids, j, k_index, g_index_nc, w_nc,q_nc, w_nc_wf, welfare)
                     vt_renter[0,j, k_index,g_index,:,e_index],qt_renter[0,j, k_index,g_index,:,e_index], b_renter[0,j, k_index,g_index,:,e_index], vt_renter_wf[0,j, k_index,g_index,:,e_index] = stayer_problem_renter.solve(par, grids, j, k_index, g_index, t_index, dP_C,dP_NC, dP_C,dP_NC, w_renter,q_renter, w_renter_wf, welfare)
     
-                    vt_buy_c[0,j, k_index,g_index,:,e_index], qt_buy_c[0,j, k_index,g_index,:,e_index], vt_buy_c_wf[0,j, k_index,g_index,:,e_index] = buyer_problem_epsilons.solve(par, grids, j, k_index,  g_index, e_index, dP_C, vt_stay_c[0,j, k_index,g_index,:,:,:,e_index], c_c[0,j, k_index,g_index,:,:,:,e_index], vt_stay_c_wf[0,j, k_index,g_index,:,:,:,e_index], welfare)
-                    vt_buy_nc[0,j, k_index,g_index,:,e_index], qt_buy_nc[0,j, k_index,g_index,:,e_index], vt_buy_nc_wf[0,j, k_index,g_index,:,e_index] = buyer_problem_epsilons.solve(par, grids, j, k_index, g_index_nc, e_index, dP_NC, vt_stay_nc[0,j, k_index,g_index,:,:,:,e_index], c_nc[0,j, k_index,g_index,:,:,:,e_index], vt_stay_nc_wf[0,j, k_index,g_index,:,:,:,e_index], welfare)
+                    vt_buy_c[0,j, k_index,g_index,:,e_index], qt_buy_c[0,j, k_index,g_index,:,e_index], vt_buy_c_wf[0,j, k_index,g_index,:,e_index] = buyer_problem_epsilons.solve(par, grids, j, k_index,  g_index, e_index, dP_C, grids.mPTI_C[j,e_index], vt_stay_c[0,j, k_index,g_index,:,:,:,e_index], c_c[0,j, k_index,g_index,:,:,:,e_index], vt_stay_c_wf[0,j, k_index,g_index,:,:,:,e_index], welfare)
+                    vt_buy_nc[0,j, k_index,g_index,:,e_index], qt_buy_nc[0,j, k_index,g_index,:,e_index], vt_buy_nc_wf[0,j, k_index,g_index,:,e_index] = buyer_problem_epsilons.solve(par, grids, j, k_index, g_index_nc, e_index, dP_NC, grids.mPTI_NC[j,e_index], vt_stay_nc[0,j, k_index,g_index,:,:,:,e_index], c_nc[0,j, k_index,g_index,:,:,:,e_index], vt_stay_nc_wf[0,j, k_index,g_index,:,:,:,e_index], welfare)
     
     
     

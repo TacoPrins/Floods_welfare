@@ -4,7 +4,7 @@ import numpy as np
 import grids as grid
 from scipy.optimize import brentq
 
-def create(par, experiment=False):
+def create(par, experiment=False, mortgage_premium = False):
        
     # create grids
     mMarkov, vE = tauch.tauchen(par.dRho, par.dSigmaeps, par.iNumStates, par.iM, par.time_increment)
@@ -27,10 +27,17 @@ def create(par, experiment=False):
     min_inc=(np.exp(vChi[0] + vE[0])-par.tau_0*np.exp(vChi[0] + vE[0])**(1-par.tau_1))/median_inc
    
     #construct lti vector as function of age
-    mPTI=np.zeros((par.iNj, vE.size))
+    mPTI_C=np.zeros((par.iNj, vE.size))
+    mPTI_NC=np.zeros((par.iNj, vE.size))
+    if mortgage_premium == False:
+        mortgage_rate_c = par.r_m_c
+    elif mortgage_premium == True:
+        mortgage_rate_c = par.r_m_c_experiment 
+        
     for j_index in range(par.iNj-1):
         for e_index in range(vE.size):
-            mPTI[j_index,e_index]=max_mortgage_size(par, j_index, e_index, vChi, vE)/median_inc
+            mPTI_C[j_index,e_index]=max_mortgage_size(par, j_index, e_index, vChi, vE, mortgage_rate_c)/median_inc
+            mPTI_NC[j_index,e_index]=max_mortgage_size(par, j_index, e_index, vChi, vE, par.r_m_nc)/median_inc
         
 
     if experiment:
@@ -140,7 +147,8 @@ def create(par, experiment=False):
                   'mMarkov_trans': mMarkov_trans[0,:],
                   'vEpsilon': np.array([0,1]),
                   'vLkeps':np.linspace(0,5,2),
-                  'mPTI': mPTI,
+                  'mPTI_C': mPTI_C,
+                  'mPTI_NC': mPTI_NC,
                   'vPi_S_median': vPi_S_median,
                   'vTypes': np.array([0.58, 0.42]),
                   'max_ltv': par.max_ltv, 
@@ -151,19 +159,19 @@ def create(par, experiment=False):
     
     return grids, mMarkov
 
-def net_payment_frac(mortgage_size, par, j, e_index, vChi, vE):
+def net_payment_frac(mortgage_size, par, j, e_index, vChi, vE, mortgage_rate):
     if j<par.j_ret:
         pretax_income_pers=np.exp(vChi[j] + vE[e_index])
     else:
         pretax_income_pers=0.7*np.exp(vChi[par.j_ret-1] + vE[e_index])   
-    posttax_income=pretax_income_pers-par.tau_0*(max(pretax_income_pers-par.r_m*mortgage_size,0))**(1-par.tau_1)
+    posttax_income=pretax_income_pers-par.tau_0*(max(pretax_income_pers-mortgage_rate*mortgage_size,0))**(1-par.tau_1)
     mortgage_rebate=par.tau_0*(pretax_income_pers)**(1-par.tau_1)-(posttax_income-pretax_income_pers)
-    payment_next = (par.r_m*(1+par.r_m)**(par.iNj-(j+1))/((1+par.r_m)**(par.iNj-(j+1))-1))*mortgage_size-mortgage_rebate
+    payment_next = (mortgage_rate*(1+mortgage_rate)**(par.iNj-(j+1))/((1+mortgage_rate)**(par.iNj-(j+1))-1))*mortgage_size-mortgage_rebate
     pti_gap=payment_next/posttax_income-par.lambda_pti
     return pti_gap
 
 
-def max_mortgage_size(par, j, e_index, vChi, vE,
+def max_mortgage_size(par, j, e_index, vChi, vE, mortgage_rate,
                       m_min=0.0, m_max=10000000):
     """
     Finds the maximum mortgage size such that
@@ -171,14 +179,14 @@ def max_mortgage_size(par, j, e_index, vChi, vE,
     """
 
     # If even zero mortgage violates the constraint, return 0
-    if net_payment_frac(m_min, par, j, e_index, vChi, vE) > 0:
+    if net_payment_frac(m_min, par, j, e_index, vChi, vE, mortgage_rate) > 0:
         return 0.0
 
     # Ensure upper bound actually violates the constraint
-    if net_payment_frac(m_max, par, j, e_index, vChi, vE) < 0:
+    if net_payment_frac(m_max, par, j, e_index, vChi, vE, mortgage_rate) < 0:
         raise ValueError("m_max too small — increase the upper search bound.")
 
     # Solve pti(m) = par.pti
-    m_star = brentq(net_payment_frac, m_min, m_max, args=(par, j, e_index, vChi, vE))
+    m_star = brentq(net_payment_frac, m_min, m_max, args=(par, j, e_index, vChi, vE, mortgage_rate))
 
     return m_star

@@ -27,9 +27,9 @@ def full_information_shock(grids, par, method, iNj, mMarkov, vCoeff_C_experiment
     dP_C_initial=price_history[0,-2]
     dP_NC_initial=price_history[1,-2]
     sceptics=False
-    dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, iteration, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=equil.find_coefficients(par, grids, method, sceptics, iNj, mMarkov, vCoeff_C_experiment, vCoeff_NC_experiment,dP_C_initial, dP_NC_initial,mDist_c_start, mDist_nc_start, mDist_renter_start, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq)
+    dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, iteration, vt_stay_c, vt_stay_nc, vt_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=equil.find_coefficients(par, grids, method, sceptics, iNj, mMarkov, vCoeff_C_experiment, vCoeff_NC_experiment,dP_C_initial, dP_NC_initial,mDist_c_start, mDist_nc_start, mDist_renter_start, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq)
     
-    return dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf
+    return dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter,  vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf
 
 @njit
 def building_restriction_shock(grids, par, method, iNj, mMarkov, vCoeff_C_experiment, vCoeff_NC_experiment, price_history, mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq):
@@ -38,9 +38,9 @@ def building_restriction_shock(grids, par, method, iNj, mMarkov, vCoeff_C_experi
     dP_NC_initial=price_history[1,-2]
     sceptics=True
     building_rest=True
-    dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, iteration, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=equil.find_coefficients(par, grids, method, sceptics, iNj, mMarkov, vCoeff_C_experiment, vCoeff_NC_experiment,dP_C_initial, dP_NC_initial,mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, building_rest = building_rest)
+    dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, iteration, vt_stay_c, vt_stay_nc, vt_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=equil.find_coefficients(par, grids, method, sceptics, iNj, mMarkov, vCoeff_C_experiment, vCoeff_NC_experiment,dP_C_initial, dP_NC_initial,mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, building_rest = building_rest)
     
-    return dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf
+    return dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf
 
 @njit
 def mortgage_shock(grids, par, method, iNj, mMarkov, vCoeff_C_experiment, vCoeff_NC_experiment, price_history, mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq):
@@ -49,9 +49,9 @@ def mortgage_shock(grids, par, method, iNj, mMarkov, vCoeff_C_experiment, vCoeff
     dP_NC_initial=price_history[1,-2]
     sceptics=True
     mortgage_premium = True
-    dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, iteration, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=equil.find_coefficients(par, grids, method, sceptics, iNj, mMarkov, vCoeff_C_experiment, vCoeff_NC_experiment,dP_C_initial, dP_NC_initial,mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, mortgage_premium = mortgage_premium)
+    dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, iteration, vt_stay_c, vt_stay_nc, vt_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=equil.find_coefficients(par, grids, method, sceptics, iNj, mMarkov, vCoeff_C_experiment, vCoeff_NC_experiment,dP_C_initial, dP_NC_initial,mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, mortgage_premium = mortgage_premium)
     
-    return dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf
+    return dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter,vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf
    
 
 ###################################
@@ -81,8 +81,8 @@ def full_information_experiment(par, func, method,  vCoeff_C, vCoeff_NC, vCoeff_
     experiment=True
     price_history, _, _, _,  mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq, vnoncoastal_beq, vsavings_beq=gen_distribution_now(grids, par, func, method, mMarkov, vCoeff_C, vCoeff_NC, vCoeff_C_initial, vCoeff_NC_initial)
     grids_exp, mMarkov=grid_creation.create(par, experiment)
-    dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=full_information_shock(grids_exp, par, method, par.iNj, mMarkov, vCoeff_C_experiment_guess, vCoeff_NC_experiment_guess, price_history, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq[-1], vnoncoastal_beq[-1], vsavings_beq[-1])
-    return price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf
+    dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=full_information_shock(grids_exp, par, method, par.iNj, mMarkov, vCoeff_C_experiment_guess, vCoeff_NC_experiment_guess, price_history, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq[-1], vnoncoastal_beq[-1], vsavings_beq[-1])
+    return price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter,  vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf
 
 
 def building_restriction_experiments(par, func, method, vCoeff_C, vCoeff_NC, vCoeff_C_experiment_guess, vCoeff_NC_experiment_guess, vCoeff_C_initial, vCoeff_NC_initial):
@@ -90,14 +90,14 @@ def building_restriction_experiments(par, func, method, vCoeff_C, vCoeff_NC, vCo
     experiment=True
     price_history, _, _, _,  mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq, vnoncoastal_beq, vsavings_beq=gen_distribution_now(grids, par, func, method, mMarkov, vCoeff_C, vCoeff_NC, vCoeff_C_initial, vCoeff_NC_initial)
     grids_exp, mMarkov=grid_creation.create(par, experiment)
-    dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment,  vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=building_restriction_shock(grids_exp, par, method, par.iNj, mMarkov, vCoeff_C_experiment_guess, vCoeff_NC_experiment_guess, price_history, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq[-1], vnoncoastal_beq[-1], vsavings_beq[-1])
-    return price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf
+    dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment,  vt_stay_c, vt_stay_nc, vt_renter,  vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=building_restriction_shock(grids_exp, par, method, par.iNj, mMarkov, vCoeff_C_experiment_guess, vCoeff_NC_experiment_guess, price_history, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq[-1], vnoncoastal_beq[-1], vsavings_beq[-1])
+    return price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf
     
 def mortgage_experiment(par, func, method, vCoeff_C, vCoeff_NC, vCoeff_C_experiment_guess, vCoeff_NC_experiment_guess, vCoeff_C_initial, vCoeff_NC_initial):
     grids, mMarkov=grid_creation.create(par)
     experiment=True
     price_history, _, _, _,  mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq, vnoncoastal_beq, vsavings_beq=gen_distribution_now(grids, par, func, method, mMarkov, vCoeff_C, vCoeff_NC, vCoeff_C_initial, vCoeff_NC_initial)
     grids_exp, mMarkov=grid_creation.create(par, experiment)
-    dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment,  vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=mortgage_shock(grids_exp, par, method, par.iNj, mMarkov, vCoeff_C_experiment_guess, vCoeff_NC_experiment_guess, price_history, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq[-1], vnoncoastal_beq[-1], vsavings_beq[-1])
-    return price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf
+    dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment,  vt_stay_c, vt_stay_nc, vt_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf=mortgage_shock(grids_exp, par, method, par.iNj, mMarkov, vCoeff_C_experiment_guess, vCoeff_NC_experiment_guess, price_history, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq[-1], vnoncoastal_beq[-1], vsavings_beq[-1])
+    return price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter,  vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf
    
