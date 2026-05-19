@@ -10,6 +10,171 @@ import equilibrium as equil
 import household_problem_epsilons_nolearning as household_problem  
 import simulation as sim
 
+def plot_price_transition_exp(
+    vCoeff_C_initial,
+    vCoeff_NC_initial,
+    vCoeff_C_baseline,
+    vCoeff_NC_baseline,
+    vCoeff_C_experiment,
+    vCoeff_NC_experiment,
+    par,
+    grids,
+    title,
+    switch_index=14,
+):
+    """
+    Plot the price paths for C and NC.
+
+    C has one color throughout.
+    NC has one color throughout.
+    """
+
+    T = len(grids.vTime)
+    t_indices = np.arange(T)
+    years = t_indices * 2 + 1998
+
+    P_C_base = np.array([
+        lom.LoM_C(grids, t_index, vCoeff_C_baseline)
+        for t_index in t_indices
+    ])
+
+    P_NC_base = np.array([
+        lom.LoM_NC(grids, t_index, vCoeff_NC_baseline)
+        for t_index in t_indices
+    ])
+
+    P_C_exp = np.array([
+        lom.LoM_C(grids, t_index, vCoeff_C_experiment)
+        for t_index in t_indices
+    ])
+
+    P_NC_exp = np.array([
+        lom.LoM_NC(grids, t_index, vCoeff_NC_experiment)
+        for t_index in t_indices
+    ])
+
+    P_C_initial = lom.LoM_C(grids, 0, vCoeff_C_initial)
+    P_NC_initial = lom.LoM_NC(grids, 0, vCoeff_NC_initial)
+
+    year0 = years[0]
+    switch_year = years[switch_index]
+    final_year = years[-1]
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    color_C = "tab:blue"
+    color_NC = "tab:orange"
+
+    # --------------------
+    # Flood-exposed C
+    # --------------------
+    ax.scatter(year0, P_C_initial, marker="o", color=color_C)
+    ax.scatter(year0, P_C_base[0], marker="o", color=color_C)
+
+    ax.plot(
+        [year0, year0],
+        [P_C_initial, P_C_base[0]],
+        linestyle="--",
+        color=color_C
+    )
+
+    ax.plot(
+        years[:switch_index + 1],
+        P_C_base[:switch_index + 1],
+        color=color_C,
+        label="Flood-exposed"
+    )
+
+    ax.scatter(
+        switch_year,
+        P_C_base[switch_index],
+        marker="o",
+        color=color_C
+    )
+
+    ax.scatter(
+        switch_year,
+        P_C_exp[switch_index],
+        marker="o",
+        color=color_C
+    )
+
+    ax.plot(
+        [switch_year, switch_year],
+        [P_C_base[switch_index], P_C_exp[switch_index]],
+        linestyle="--",
+        color=color_C
+    )
+
+    ax.plot(
+        years[switch_index:],
+        P_C_exp[switch_index:],
+        color=color_C
+    )
+
+    ax.scatter(final_year, P_C_exp[-1], marker="o", color=color_C)
+
+    # --------------------
+    # Non-flood-exposed NC
+    # --------------------
+    ax.scatter(year0, P_NC_initial, marker="s", color=color_NC)
+    ax.scatter(year0, P_NC_base[0], marker="s", color=color_NC)
+
+    ax.plot(
+        [year0, year0],
+        [P_NC_initial, P_NC_base[0]],
+        linestyle="--",
+        color=color_NC
+    )
+
+    ax.plot(
+        years[:switch_index + 1],
+        P_NC_base[:switch_index + 1],
+        color=color_NC,
+        label="Non-flood-exposed"
+    )
+
+    ax.scatter(
+        switch_year,
+        P_NC_base[switch_index],
+        marker="s",
+        color=color_NC
+    )
+
+    ax.scatter(
+        switch_year,
+        P_NC_exp[switch_index],
+        marker="s",
+        color=color_NC
+    )
+
+    ax.plot(
+        [switch_year, switch_year],
+        [P_NC_base[switch_index], P_NC_exp[switch_index]],
+        linestyle="--",
+        color=color_NC
+    )
+
+    ax.plot(
+        years[switch_index:],
+        P_NC_exp[switch_index:],
+        color=color_NC
+    )
+
+    ax.scatter(final_year, P_NC_exp[-1], marker="s", color=color_NC)
+
+    ax.axvline(switch_year, linestyle=":", linewidth=1, color="black")
+
+    ax.set_xlabel("Year")
+    ax.set_ylabel("Price")
+    ax.set_title(title)
+    ax.legend()
+    ax.set_ylim(0.55, 0.85)
+    ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
 def plot_pricepaths(par, grids, mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C, vCoeff_NC, vCoeff_C_RE, vCoeff_NC_RE, vCoeff_C_terminal_RE, vCoeff_NC_terminal_RE, vCoeff_C_terminal_HE, vCoeff_NC_terminal_HE):
     # import parameters
     normalisation=vCoeff_NC_initial[0]

@@ -37,6 +37,7 @@ import moments as mom
 import proper_welfare_debug as welfare_stats
 from numba import config
 from scipy.stats import norm
+import plot_creation as plot_creat
 import moments as find_moments
 import experiments as experiments
 
@@ -326,15 +327,48 @@ def main():
     #y_nc=(1+0.25*(par.vPi_S_median-par.vPi_S_median[0]))*vCoeff_NC_initial[0]
     #beta_nc = np.linalg.inv(X.T @ X) @ X.T @ y_nc
 
+    # baseline coefficients
     vCoeff_C=np.array([ 0.66335385, -0.03015386,  0.00541847,  0.00797395,  0.00249396])
     vCoeff_NC=np.array([ 0.81033554,  0.01679082, -0.00574326, -0.00115107,  0.00101112])
-    # #NOT CONVERGED YET 
-    # vCoeff_C_RE=np.array([ 0.6355361, -0.05750348,0.00171657, 0.00611094,0.00187107])
-    # vCoeff_NC_RE=np.array([ 0.82617263, 0.03256824, -0.00530541,-0.00385609,0.00083488])
+    # rational expectations
+    vCoeff_C_RE=np.array([ 0.6355361, -0.05750348,0.00171657, 0.00611094,0.00187107])
+    vCoeff_NC_RE=np.array([ 0.82617263, 0.03256824, -0.00530541,-0.00385609,0.00083488])
     
+    # experiments
+    vCoeff_C_FullInfo=np.array([ 0.62190337, -0.04657477,  0.00822706,  0.00254822,  0.0029312 ])
+    vCoeff_NC_FullInfo=np.array([ 8.36567710e-01,  2.38785227e-02, -3.96488165e-03, -4.07334828e-04, 2.94338367e-03])
     
-    vCoeff_C_experiment=np.array([ 0.62190337, -0.04657477,  0.00822706,  0.00254822,  0.0029312 ])
-    vCoeff_NC_experiment=np.array([ 8.36567710e-01,  2.38785227e-02, -3.96488165e-03, -4.07334828e-04, 2.94338367e-03])
+    vCoeff_C_MortPrem=np.array([ 0.60098843, -0.03296091,  0.00639342,  0.00396968,  0.00163983])
+    vCoeff_NC_MortPrem=np.array([ 8.21154449e-01,  3.80601753e-02, -6.76252468e-03, -5.80962019e-04, 1.13590997e-03])
+    
+    vCoeff_C_BuildRest=np.array([ 0.67527158, -0.0074648,   0.005937 ,   0.00115818, -0.00089291])
+    vCoeff_NC_BuildRest=np.array([ 8.32986096e-01 , 1.29340204e-02, -6.26946892e-03,  1.87209805e-03, 5.95771541e-04])
+    plot_creat.plot_price_transition_exp(
+        vCoeff_C_initial,
+        vCoeff_NC_initial,
+        vCoeff_C,
+        vCoeff_NC,
+        vCoeff_C_MortPrem,
+        vCoeff_NC_MortPrem,
+        par,
+        grids,
+        'Mortgage premium introduction 2026',
+        switch_index=14,
+    )
+    
+    plot_creat.plot_price_transition_exp(
+        vCoeff_C_initial,
+        vCoeff_NC_initial,
+        vCoeff_C,
+        vCoeff_NC,
+        vCoeff_C_BuildRest,
+        vCoeff_NC_BuildRest,
+        par,
+        grids,
+        'Building restriction introduction 2026',
+        switch_index=14,
+    )
+    
     
     method='secant'
     func=False
@@ -342,8 +376,8 @@ def main():
     # sceptics=False 
     # welfare=True
     
-    # tax_equiv_C_RE, tax_equiv_NC_RE, tax_equiv_renter_RE, tax_equiv_newborns_RE =  welfare_stats.find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_RE, vCoeff_NC_RE, False)
-    # tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns =  welfare_stats.find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C, vCoeff_NC, True)
+    # tax_equiv_C_RE, tax_equiv_NC_RE, tax_equiv_renter_RE, tax_equiv_newborns_RE =  welfare_stats.find_expenditure_equiv_GK_SLR(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_RE, vCoeff_NC_RE, False)
+    # tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns =  welfare_stats.find_expenditure_equiv_GK_SLR(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C, vCoeff_NC, True)
 
 
     # plot_tax_equiv(grids, 100*-tax_equiv_C[:,:], 100*-tax_equiv_NC[:,:], 100*-tax_equiv_renter[:,:], 'Expenditure equivalent - Renters')
@@ -353,23 +387,23 @@ def main():
     # plot_tax_equiv_newborns_RE_vs_nonRE(grids,100*-tax_equiv_newborns,100*-tax_equiv_newborns_RE)
 
     # run experiments:
-    # price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = experiments.building_restriction_experiments(par, func, method, vCoeff_C, vCoeff_NC, vCoeff_C_experiment, vCoeff_NC_experiment, vCoeff_C_initial, vCoeff_NC_initial)    
-    price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = experiments.mortgage_experiment(par, func, method, vCoeff_C, vCoeff_NC, vCoeff_C_experiment, vCoeff_NC_experiment, vCoeff_C_initial, vCoeff_NC_initial)    
-    #experiments.full_information_experiment(par, func, method,  vCoeff_C, vCoeff_NC, vCoeff_C_experiment, vCoeff_NC_experiment, vCoeff_C_initial, vCoeff_NC_initial)
-    print('price history')
-    print(price_history)
+    # price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter,  vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = experiments.building_restriction_experiments(par, func, method, vCoeff_C, vCoeff_NC, vCoeff_C_BuildRest, vCoeff_NC_BuildRest, vCoeff_C_initial, vCoeff_NC_initial)    
+    # price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = experiments.mortgage_experiment(par, func, method, vCoeff_C, vCoeff_NC, vCoeff_C_MortPrem, vCoeff_NC_MortPrem, vCoeff_C_initial, vCoeff_NC_initial)    
+    # price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter,  vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = experiments.full_information_experiment(par, func, method,  vCoeff_C, vCoeff_NC, vCoeff_C_FullInfo, vCoeff_NC_FullInfo, vCoeff_C_initial, vCoeff_NC_initial)
+    # print('price history')
+    # print(price_history)
     
-    print('vCoeff_NC_experiment')
-    print(vCoeff_NC_experiment)
+    # print('vCoeff_NC_experiment')
+    # print(vCoeff_NC_experiment)
     
-    print('vCoeff_C_experiment')
-    print(vCoeff_C_experiment)
+    # print('vCoeff_C_experiment')
+    # print(vCoeff_C_experiment)
     
-    print('dP_NC_vec_experiment')
-    print(dP_NC_vec_experiment)
+    # print('dP_NC_vec_experiment')
+    # print(dP_NC_vec_experiment)
     
-    print('dP_C_vec_experiment')
-    print(dP_C_vec_experiment)
+    # print('dP_C_vec_experiment')
+    # print(dP_C_vec_experiment)
     
 ###########################################################
 
