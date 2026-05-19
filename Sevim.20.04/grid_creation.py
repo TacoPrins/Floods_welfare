@@ -39,21 +39,26 @@ def create(par, experiment=False, mortgage_premium = False):
             mPTI_C[j_index,e_index]=max_mortgage_size(par, j_index, e_index, vChi, vE, mortgage_rate_c)/median_inc
             mPTI_NC[j_index,e_index]=max_mortgage_size(par, j_index, e_index, vChi, vE, par.r_m_nc)/median_inc
         
+    
+    
 
+    
     if experiment:
         vPi_S_median=par.vPi_S_median[int((2026-1998)/par.time_increment):]
     else:
         vPi_S_median=par.vPi_S_median    
     vZ= np.array([1, 0.9, 0.7, 0.3])
     vPDF_z= np.array([1, 0.4, 0.4, 0.2])
-
+    
+    #WARNING - RETHINK FOR INCREASING CURVE
+    vPi_L=np.ones(len(vPi_S_median))*par.vPi_S_median[0]
 
     vL_sim=np.linspace(0, 1.5, 35)
     #vH=  np.array([1.50, 1.92, 2.46, 3.15, 4.03, 5.15])
     vH=np.linspace(1.50,par.h_max,3)
     vH_renter=np.array([1.17, 1.92])
     
-    vPi_L=np.ones(len(vPi_S_median))*vPi_S_median[0]
+   
     
     
     #We want to have equal and narrow grid spacing over the range where discrete decisions vary with income. 

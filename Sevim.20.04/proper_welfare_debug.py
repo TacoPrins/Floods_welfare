@@ -291,8 +291,9 @@ def find_expenditure_equiv_EK_SLR(par, grids, mMarkov, vCoeff_C_initial, vCoeff_
 
     return tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns
 
+
 @njit
-def find_expenditure_equiv_EK_policy(par, grids, mMarkov, v_nonowner_wf_BAU, v_owner_c_wf_BAU, v_owner_nc_wf_BAU, dist_c_BAU, dist_nc_BAU, dist_renter_BAU, vCoeff_C_policy, vCoeff_NC_policy, sceptics=True, building_rest = False, mortgage_premium = False):
+def find_expenditure_equiv_EK_policy(par, grids, grids_pol, mMarkov,  v_owner_c_wf_pol, v_owner_nc_wf_pol, v_nonowner_wf_pol, mDist0_c, mDist0_nc, mDist0_renter, vCoeff_C_policy, vCoeff_NC_policy, sceptics=True, building_rest = False, mortgage_premium = False):
     """
     New: import the value functions at the time of policy introduction as well as the distribution:
     I call it the 'business as usual' (BAU) value functions
@@ -321,10 +322,12 @@ def find_expenditure_equiv_EK_policy(par, grids, mMarkov, v_nonowner_wf_BAU, v_o
     # get value functions over transition with experiment
     welfare = True
     
+    price_history, _, _, mDist1_renter, stock_demand_rental_C1, stock_demand_rental_NC1, vcoastal_beq, vnoncoastal_beq, vsavings_beq, _, _, _, v_owner_c_wf_pol, v_owner_nc_wf_pol, v_nonowner_wf_pol,_,_,_=equil.generate_pricepath(grids_pol, par, func, mMarkov, vCoeff_C_in,vCoeff_NC_in, vCoeff_C_initial[0], vCoeff_NC_initial[0], mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, rental_stock_C_out, rental_stock_NC_out, coastal_beq, noncoastal_beq, savings_beq,coastal_mass_J,noncoastal_mass_J,renter_mass_J, method, sceptics, experiment, welfare)
 
-    v_nonowner_wf_expanded_BAU=grid_adjust_rentshape(par,grids,v_nonowner_wf_BAU)
-    v_owner_c_wf_expanded_BAU=grid_adjust(par,grids,v_owner_c_wf_BAU)
-    v_owner_nc_wf_expanded_BAU=grid_adjust(par,grids,v_owner_nc_wf_BAU)
+
+    v_owner_c_wf_expanded_pol=grid_adjust(par,grids,v_owner_c_wf_pol)
+    v_owner_nc_wf_expanded_pol=grid_adjust(par,grids,v_owner_nc_wf_pol)
+    v_nonowner_wf_expanded_pol=grid_adjust_rentshape(par,grids,v_nonowner_wf_pol)
     
     
     wf_loss = np.linspace(-0.10, 0.15,100)
@@ -334,34 +337,39 @@ def find_expenditure_equiv_EK_policy(par, grids, mMarkov, v_nonowner_wf_BAU, v_o
     ce_renter = np.zeros((wf_loss.size,k_dim, grids.vE.size))
     ce_renter_newborns = np.zeros((wf_loss.size,grids.vTime.size, k_dim, grids.vE.size))
     
-    wf_BAU_c=np.zeros((k_dim,grids.vE.size))
-    wf_BAU_nc=np.zeros((k_dim,grids.vE.size))
-    wf_BAU_rent=np.zeros((k_dim,grids.vE.size))
-    wf_pol_newborns=np.zeros((wf_loss.size,k_dim,grids.vE.size))
+    wf_pol_c=np.zeros((k_dim,grids.vE.size))
+    wf_pol_nc=np.zeros((k_dim,grids.vE.size))
+    wf_pol_rent=np.zeros((k_dim,grids.vE.size))
+    wf_BAU_newborns=np.zeros((wf_loss.size,k_dim,grids.vE.size))
+    
     
     for k_index in range(k_dim):
         for e_index in range(grids.vE.size):
-            wf_BAU_c[k_index,e_index] = np.sum(dist_c_BAU[1:,k_index, :, :,:,:,e_index]* v_owner_c_wf_expanded_BAU[0,1:,k_index, :, :,:,:,e_index])
-            wf_BAU_nc[k_index,e_index] = np.sum(dist_nc_BAU[1:,k_index, :, :,:,:,e_index]* v_owner_nc_wf_expanded_BAU[0,1:,k_index, :, :,:,:,e_index])
-            wf_BAU_rent[k_index,e_index] = np.sum(dist_renter_BAU[:,k_index, :, :,e_index]* v_nonowner_wf_expanded_BAU[0,:,k_index, :, :,e_index])
+            wf_pol_c[k_index,e_index] = np.sum(mDist0_c[1:,k_index, :, :,:,:,e_index]* v_owner_c_wf_expanded_pol[0,1:,k_index, :, :,:,:,e_index])
+            wf_pol_nc[k_index,e_index] = np.sum(mDist0_nc[1:,k_index, :, :,:,:,e_index]* v_owner_nc_wf_expanded_pol[0,1:,k_index, :, :,:,:,e_index])
+            wf_pol_rent[k_index,e_index] = np.sum(mDist0_renter[:,k_index, :, :,e_index]* v_nonowner_wf_expanded_pol[0,:,k_index, :, :,e_index])
     
     
+    
+
     for wf_idx in range(wf_loss.size):
         par.wf_wedge[0] = wf_loss[wf_idx]
         print(par.wf_wedge[0])
+        
+       
+        _, _, _, _, _, _, v_owner_c_wf_BAU, v_owner_nc_wf_BAU, v_nonowner_wf_BAU = household_problem.solve(grids, par, par.iNj, mMarkov, vCoeff_C, vCoeff_NC, sceptics, welfare)
 
-        v_owner_c_wf_pol, v_owner_nc_wf_pol, v_nonowner_wf_pol, _, _, _ = household_problem.solve(grids, par, par.iNj, mMarkov, vCoeff_C_policy, vCoeff_NC_policy, sceptics, welfare, building_rest, mortgage_premium)
-        v_nonowner_wf_expanded_pol=grid_adjust_rentshape(par,grids,v_nonowner_wf_pol)
         v_owner_c_wf_expanded_pol=grid_adjust(par,grids,v_owner_c_wf_pol)
         v_owner_nc_wf_expanded_pol=grid_adjust(par,grids,v_owner_nc_wf_pol)
+        v_nonowner_wf_expanded_pol=grid_adjust_rentshape(par,grids,v_nonowner_wf_pol)
         
         
         for k_index in range(k_dim):
             for e_index in range(grids.vE.size):
                 "SHOULD WE TAKE t = 2026-1998/2 (=14) HERE BECAUSE THATS 2026? (probably hard code 'policy_timing' here"
-                wf_pol_c = np.sum(dist_c_BAU[1:,k_index, :, :,:,:,e_index]* v_owner_c_wf_expanded_pol[14,1:,k_index, :, :,:,:,e_index])
-                wf_pol_nc = np.sum(dist_nc_BAU[1:,k_index, :, :,:,:,e_index]* v_owner_nc_wf_expanded_pol[14,1:,k_index, :, :,:,:,e_index])
-                wf_pol_rent = np.sum(dist_renter_BAU[:,k_index, :, :,e_index]* v_nonowner_wf_expanded_pol[14,:,k_index, :, :,e_index])
+                wf_pol_c = np.sum(dist_c_BAU[1:,k_index, :, :,:,:,e_index]* v_owner_c_wf_expanded_pol[0,1:,k_index, :, :,:,:,e_index])
+                wf_pol_nc = np.sum(dist_nc_BAU[1:,k_index, :, :,:,:,e_index]* v_owner_nc_wf_expanded_pol[0,1:,k_index, :, :,:,:,e_index])
+                wf_pol_rent = np.sum(dist_renter_BAU[:,k_index, :, :,e_index]* v_nonowner_wf_expanded_pol[0,:,k_index, :, :,e_index])
                 
                 ce_C[wf_idx,k_index, e_index] = wf_pol_c - wf_BAU_c[k_index,e_index]
                 ce_NC[wf_idx,k_index, e_index] = wf_pol_nc - wf_BAU_nc[k_index,e_index]
@@ -371,7 +379,7 @@ def find_expenditure_equiv_EK_policy(par, grids, mMarkov, v_nonowner_wf_BAU, v_o
         
         for k_index in range(k_dim):
             for e_index in range(grids.vE.size):
-                for t_index in range(grids.vTime.size):
+                for t_index in range(grids_policy.vTime.size):
                     wf_pol_newborns[wf_idx, k_index,e_index] = np.sum(dist_renter_BAU[0,k_index, :, :,e_index]* v_nonowner_wf_expanded_pol[t_index,0,k_index, :, :, e_index])
             
      # NEWBORNS   
