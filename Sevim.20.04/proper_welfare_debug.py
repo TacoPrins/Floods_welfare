@@ -10,6 +10,7 @@ import misc_functions as misc
 import household_problem_epsilons_nolearning as household_problem  
 import simulation as sim
 import equilibrium as equil
+import experiments as experiments
 import simulate_initial_joint as initial_joint_sim
 from numba import njit
 
@@ -293,7 +294,7 @@ def find_expenditure_equiv_EK_SLR(par, grids, mMarkov, vCoeff_C_initial, vCoeff_
 
 
 @njit
-def find_expenditure_equiv_EK_policy(par, grids, grids_pol, mMarkov,  v_owner_c_wf_pol, v_owner_nc_wf_pol, v_nonowner_wf_pol, mDist0_c, mDist0_nc, mDist0_renter, vCoeff_C_policy, vCoeff_NC_policy, sceptics=True, building_rest = False, mortgage_premium = False):
+def find_expenditure_equiv_EK_policy(par, grids, grids_pol, mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C, vCoeff_NC, vCoeff_C_pol, vCoeff_NC_pol, sceptics=True, building_rest = False, mortgage_premium = False):
     """
     New: import the value functions at the time of policy introduction as well as the distribution:
     I call it the 'business as usual' (BAU) value functions
@@ -309,20 +310,35 @@ def find_expenditure_equiv_EK_policy(par, grids, grids_pol, mMarkov,  v_owner_c_
     lumpsum expenditure tax that makes the value function in the policy case equivalent to the BAU case.
     """
     
-    # method = 'secant'
-    # func = False
-    # initial = True
-    # experiment = False
     if sceptics == False:
         k_dim=1
     else:
         k_dim=grids.vK.size        
-
-    
-    # get value functions over transition with experiment
+    method = 'secant' 
+    func = False
     welfare = True
+
+    price_history_before_pol, mDist0_c, mDist0_nc, mDist0_renter, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq_before, vnoncoastal_beq_before, vsavings_beq_before=experiments.gen_distribution_now(grids, par, func, method, mMarkov, vCoeff_C, vCoeff_NC, vCoeff_C_initial, vCoeff_NC_initial)
+    # get value functions over transition with experiment
+    experiment = False
+    coastal_beq=vcoastal_beq_before[-1]
+    noncoastal_beq=vnoncoastal_beq_before[-1]
+    savings_beq=vsavings_beq_before[-1]
     
-    price_history, _, _, mDist1_renter, stock_demand_rental_C1, stock_demand_rental_NC1, vcoastal_beq, vnoncoastal_beq, vsavings_beq, _, _, _, v_owner_c_wf_pol, v_owner_nc_wf_pol, v_nonowner_wf_pol,_,_,_=equil.generate_pricepath(grids_pol, par, func, mMarkov, vCoeff_C_in,vCoeff_NC_in, vCoeff_C_initial[0], vCoeff_NC_initial[0], mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, rental_stock_C_out, rental_stock_NC_out, coastal_beq, noncoastal_beq, savings_beq,coastal_mass_J,noncoastal_mass_J,renter_mass_J, method, sceptics, experiment, welfare)
+    dP_C_initial=price_history_before_pol[0,-2]
+    dP_NC_initial=price_history_before_pol[1,-2]
+    
+    coastal_mass_J=np.zeros((k_dim))
+    noncoastal_mass_J=np.zeros((k_dim))
+    renter_mass_J=np.zeros((k_dim))
+    plot_stocks=False
+    price_history_after_pol, _, _, mDist1_renter, stock_demand_rental_C1, stock_demand_rental_NC1, vcoastal_beq_pol, vnoncoastal_beq_pol, vsavings_beq_pol, _, _, _, v_owner_c_wf_pol, v_owner_nc_wf_pol, v_nonowner_wf_pol,_,_,_=equil.generate_pricepath(grids_pol, par, func, mMarkov, vCoeff_C_pol,vCoeff_NC_pol, dP_C_initial, dP_NC_initial, mDist0_c, mDist0_nc, mDist0_renter, stock_demand_rental_C, stock_demand_rental_NC, coastal_beq, noncoastal_beq, savings_beq,coastal_mass_J,noncoastal_mass_J,renter_mass_J, method, sceptics, experiment, welfare, plot_stocks, building_rest, mortgage_premium)
+    building_rest=False
+    mortgage_premium = False
+
+    vCoeff_C_BAU=retransform_coeffs(vCoeff_C, grids.vTime, grids_pol.vTime)
+    vCoeff_NC_BAU=retransform_coeffs(vCoeff_NC, grids.vTime, grids_pol.vTime)
+    price_history_after_BAU, _, _, mDist1_renter, stock_demand_rental_C1, stock_demand_rental_NC1, vcoastal_beq_BAU, vnoncoastal_beq_BAU, vsavings_beq_BAU, _, _, _, v_owner_c_wf_BAU, v_owner_nc_wf_BAU, v_nonowner_wf_BAU,_,_,_=equil.generate_pricepath(grids_pol, par, func, mMarkov, vCoeff_C_BAU,vCoeff_NC_BAU, dP_C_initial, dP_NC_initial, mDist0_c, mDist0_nc, mDist0_renter, stock_demand_rental_C, stock_demand_rental_NC, coastal_beq, noncoastal_beq, savings_beq,coastal_mass_J,noncoastal_mass_J,renter_mass_J, method, sceptics, experiment, welfare, plot_stocks, building_rest, mortgage_premium)
 
 
     v_owner_c_wf_expanded_pol=grid_adjust(par,grids,v_owner_c_wf_pol)
@@ -340,56 +356,28 @@ def find_expenditure_equiv_EK_policy(par, grids, grids_pol, mMarkov,  v_owner_c_
     wf_pol_c=np.zeros((k_dim,grids.vE.size))
     wf_pol_nc=np.zeros((k_dim,grids.vE.size))
     wf_pol_rent=np.zeros((k_dim,grids.vE.size))
-    wf_BAU_newborns=np.zeros((wf_loss.size,k_dim,grids.vE.size))
-    
+    wf_pol_newborns=np.zeros((grids_pol.vTime,k_dim,grids.vE.size))       
+   
     
     for k_index in range(k_dim):
         for e_index in range(grids.vE.size):
             wf_pol_c[k_index,e_index] = np.sum(mDist0_c[1:,k_index, :, :,:,:,e_index]* v_owner_c_wf_expanded_pol[0,1:,k_index, :, :,:,:,e_index])
             wf_pol_nc[k_index,e_index] = np.sum(mDist0_nc[1:,k_index, :, :,:,:,e_index]* v_owner_nc_wf_expanded_pol[0,1:,k_index, :, :,:,:,e_index])
             wf_pol_rent[k_index,e_index] = np.sum(mDist0_renter[:,k_index, :, :,e_index]* v_nonowner_wf_expanded_pol[0,:,k_index, :, :,e_index])
-    
-    
-    
-
-    for wf_idx in range(wf_loss.size):
-        par.wf_wedge[0] = wf_loss[wf_idx]
-        print(par.wf_wedge[0])
-        
-       
-        _, _, _, _, _, _, v_owner_c_wf_BAU, v_owner_nc_wf_BAU, v_nonowner_wf_BAU = household_problem.solve(grids, par, par.iNj, mMarkov, vCoeff_C, vCoeff_NC, sceptics, welfare)
-
-        v_owner_c_wf_expanded_pol=grid_adjust(par,grids,v_owner_c_wf_pol)
-        v_owner_nc_wf_expanded_pol=grid_adjust(par,grids,v_owner_nc_wf_pol)
-        v_nonowner_wf_expanded_pol=grid_adjust_rentshape(par,grids,v_nonowner_wf_pol)
-        
-        
-        for k_index in range(k_dim):
-            for e_index in range(grids.vE.size):
-                "SHOULD WE TAKE t = 2026-1998/2 (=14) HERE BECAUSE THATS 2026? (probably hard code 'policy_timing' here"
-                wf_pol_c = np.sum(dist_c_BAU[1:,k_index, :, :,:,:,e_index]* v_owner_c_wf_expanded_pol[0,1:,k_index, :, :,:,:,e_index])
-                wf_pol_nc = np.sum(dist_nc_BAU[1:,k_index, :, :,:,:,e_index]* v_owner_nc_wf_expanded_pol[0,1:,k_index, :, :,:,:,e_index])
-                wf_pol_rent = np.sum(dist_renter_BAU[:,k_index, :, :,e_index]* v_nonowner_wf_expanded_pol[0,:,k_index, :, :,e_index])
-                
-                ce_C[wf_idx,k_index, e_index] = wf_pol_c - wf_BAU_c[k_index,e_index]
-                ce_NC[wf_idx,k_index, e_index] = wf_pol_nc - wf_BAU_nc[k_index,e_index]
-                ce_renter[wf_idx,k_index, e_index] = wf_pol_rent - wf_BAU_rent[k_index,e_index]
-        
- 
-        
-        for k_index in range(k_dim):
-            for e_index in range(grids.vE.size):
-                for t_index in range(grids_policy.vTime.size):
-                    wf_pol_newborns[wf_idx, k_index,e_index] = np.sum(dist_renter_BAU[0,k_index, :, :,e_index]* v_nonowner_wf_expanded_pol[t_index,0,k_index, :, :, e_index])
             
-     # NEWBORNS   
-    for t_index in range(grids.vTime.size):
-        dP_C=price_history[t_index,0]
-        dP_NC=price_history[t_index,1]
-        coastal_damage_frac=grids.vPi_S_median[t_index]*np.dot(grids.vPDF_z[1:],(1-grids.vZ[1:]))
-        housing_bequest=coastal_beq*(1-coastal_damage_frac-par.dDelta)*dP_C + noncoastal_beq*(1-par.dDelta)*dP_NC
-        total_bequest = (housing_bequest+savings_beq*(1+par.r))*par.iNj
-        mPi_joint=initial_joint_sim.initial_joint(par, grids, total_bequest)
+            
+            
+    coastal_beq_pol=coastal_beq
+    noncoastal_beq_pol=noncoastal_beq
+    savings_beq_pol=savings_beq
+    
+    for t_index in range(grids_pol.vTime.size):
+        dP_C=price_history_after_pol[t_index,0]
+        dP_NC=price_history_after_pol[t_index,1]
+        coastal_damage_frac=grids_pol.vPi_S_median[t_index]*np.dot(grids_pol.vPDF_z[1:],(1-grids_pol.vZ[1:]))
+        housing_bequest=coastal_beq_pol*(1-coastal_damage_frac-par.dDelta)*dP_C + noncoastal_beq_pol*(1-par.dDelta)*dP_NC
+        total_bequest = (housing_bequest+savings_beq_pol*(1+par.r))*par.iNj
+        mPi_joint=initial_joint_sim.initial_joint(par, grids_pol, total_bequest)
         # weight
         for k_index in range(k_dim):
             for e_index in range(grids.vE.size):
@@ -397,15 +385,48 @@ def find_expenditure_equiv_EK_policy(par, grids, grids_pol, mMarkov,  v_owner_c_
                     mDist1_renter[0,k_index,:,:,e_index]= (1/par.iNj)*(1/grids.vG.size)*grids.vTypes[k_index]*mPi_joint[:,e_index]        
                 else:
                     mDist1_renter[0,k_index,:,:,e_index]= (1/par.iNj)*(1/grids.vG.size)*mPi_joint[:,e_index]     
-                wf_BAU_newborns = np.sum(dist_renter_BAU[0,k_index, :, :,e_index]* v_nonowner_wf_expanded_BAU[t_index,0,k_index, :, :,e_index])
-                for wf_idx in range(wf_loss.size):
-                    ce_renter_newborns[wf_idx,t_index, k_index, e_index] = wf_SS_newborns[wf_idx, k_index,e_index] - wf_SLR_newborns 
-
+                wf_pol_newborns[t_index,k_index,e_index] = np.sum(mDist1_renter[0,k_index, :, :,e_index]* v_nonowner_wf_expanded_pol[t_index,0,k_index, :, :,e_index])
         if t_index<grids.vTime.size-1:
-            coastal_beq=vcoastal_beq[t_index]
-            noncoastal_beq=vnoncoastal_beq[t_index]
-            savings_beq=vsavings_beq[t_index]
-            
+            coastal_beq_pol=vcoastal_beq_pol[t_index]
+            noncoastal_beq_pol=vnoncoastal_beq_pol[t_index]
+            savings_beq_pol=vsavings_beq_pol[t_index]
+     
+
+    for wf_idx in range(wf_loss.size):
+        par.wf_wedge[0] = wf_loss[wf_idx]
+        print(par.wf_wedge[0])
+        _, _, _, _, _, _, v_owner_c_wf_BAU, v_owner_nc_wf_BAU, v_nonowner_wf_BAU = household_problem.solve(grids_pol, par, par.iNj, mMarkov,vCoeff_C,vCoeff_NC, sceptics, welfare, building_rest = building_rest, mortgage_premium=mortgage_premium)
+        v_owner_c_wf_expanded_BAU=grid_adjust(par,grids,v_owner_c_wf_BAU)
+        v_owner_nc_wf_expanded_BAU=grid_adjust(par,grids,v_owner_nc_wf_BAU)
+        v_nonowner_wf_expanded_BAU=grid_adjust_rentshape(par,grids,v_nonowner_wf_BAU)
+        for k_index in range(k_dim):
+            for e_index in range(grids.vE.size):
+                ce_C[wf_idx,k_index,e_index]=np.sum(mDist0_c[1:,k_index, :, :,:,:,e_index]* v_owner_c_wf_expanded_BAU[0,1:,k_index, :, :,:,:,e_index])-wf_pol_c[k_index,e_index]
+                ce_NC[wf_idx,k_index,e_index]=np.sum(mDist0_nc[1:,k_index, :, :,:,:,e_index]* v_owner_nc_wf_expanded_BAU[0,1:,k_index, :, :,:,:,e_index])-wf_pol_nc[k_index,e_index]
+                ce_renter[wf_idx,k_index,e_index]=np.sum(mDist0_renter[:,k_index, :, :,e_index]* v_nonowner_wf_expanded_BAU[0,:,k_index, :, :,e_index])-wf_pol_rent[k_index,e_index]
+        coastal_beq_BAU=coastal_beq
+        noncoastal_beq_BAU=noncoastal_beq
+        savings_beq_BAU=savings_beq
+        
+        for t_index in range(grids_pol.vTime.size):
+            dP_C=price_history_after_BAU[t_index,0]
+            dP_NC=price_history_after_BAU[t_index,1]
+            coastal_damage_frac=grids_pol.vPi_S_median[t_index]*np.dot(grids_pol.vPDF_z[1:],(1-grids_pol.vZ[1:]))
+            housing_bequest=coastal_beq_BAU*(1-coastal_damage_frac-par.dDelta)*dP_C + noncoastal_beq_BAU*(1-par.dDelta)*dP_NC
+            total_bequest = (housing_bequest+savings_beq_BAU*(1+par.r))*par.iNj
+            mPi_joint=initial_joint_sim.initial_joint(par, grids_pol, total_bequest)
+            # weight
+            for k_index in range(k_dim):
+                for e_index in range(grids.vE.size):
+                    if sceptics==True:
+                        mDist1_renter[0,k_index,:,:,e_index]= (1/par.iNj)*(1/grids.vG.size)*grids.vTypes[k_index]*mPi_joint[:,e_index]        
+                    else:
+                        mDist1_renter[0,k_index,:,:,e_index]= (1/par.iNj)*(1/grids.vG.size)*mPi_joint[:,e_index]     
+                    ce_renter_newborns[wf_idx,t_index,k_index,e_index] = np.sum(mDist1_renter[0,k_index, :, :,e_index]* v_nonowner_wf_expanded_pol[t_index,0,k_index, :, :,e_index])-wf_pol_newborns[t_index,k_index,e_index]
+            if t_index<grids.vTime.size-1:
+                coastal_beq_BAU=vcoastal_beq_BAU[t_index]
+                noncoastal_beq_BAU=vnoncoastal_beq_BAU[t_index]
+                savings_beq_BAU=vsavings_beq_BAU[t_index] 
                         
     par.wf_wedge[0] = 0.0
     
@@ -609,3 +630,76 @@ def compute_p_left(grid, x, i_left):
     p_left = (x_right - x) / (x_right - x_left)
 
     return p_left
+
+@njit
+def retransform_coeffs(vCoeff_C, vTime_old, vTime_new):
+    """
+    Recompute Chebyshev coefficients for a left-truncated time grid.
+    
+    The polynomial value at each t is preserved exactly.
+    Assumes the right endpoint is unchanged: vTime_old[-1] == vTime_new[-1]
+    """
+    a, b  = vTime_old[0], vTime_old[-1]
+    a_new = vTime_new[0]
+    # b == vTime_new[-1] (unchanged)
+
+    # s = alpha * s' + beta
+    alpha = (b - a_new) / (b - a)
+    beta  = (a_new - a) / (b - a)
+
+    c = vCoeff_C  # shorthand
+
+    # Expand T_k(alpha * s' + beta) in terms of powers of s', then
+    # collect coefficients for [1, s', s'^2, s'^3, s'^4].
+    # Using: T1=x, T2=2x²-1, T3=4x³-3x, T4=8x⁴-8x²+1, x = alpha*s'+beta
+
+    al  = alpha
+    be  = beta
+    al2 = al**2;  al3 = al**3;  al4 = al**4
+    be2 = be**2;  be3 = be**3;  be4 = be**4
+
+    # Contribution of each T_k to power basis [p0, p1, p2, p3, p4]:
+    #   c[0]*T0: just c[0]
+    #   c[1]*T1(al*s'+be) = c[1]*(al*s' + be)
+    #   c[2]*T2(al*s'+be) = c[2]*(2(al*s'+be)² - 1)
+    #   c[3]*T3(al*s'+be) = c[3]*(4(al*s'+be)³ - 3(al*s'+be))
+    #   c[4]*T4(al*s'+be) = c[4]*(8(al*s'+be)⁴ - 8(al*s'+be)² + 1)
+
+    p = np.zeros(5)  # coefficients of [1, s', s'^2, s'^3, s'^4]
+
+    # T0
+    p[0] += c[0]
+
+    # T1
+    p[0] += c[1] * be
+    p[1] += c[1] * al
+
+    # T2 = 2x² - 1
+    p[0] += c[2] * (2*be2 - 1)
+    p[1] += c[2] * (4*be*al)
+    p[2] += c[2] * (2*al2)
+
+    # T3 = 4x³ - 3x
+    p[0] += c[3] * (4*be3 - 3*be)
+    p[1] += c[3] * (12*be2*al - 3*al)
+    p[2] += c[3] * (12*be*al2)
+    p[3] += c[3] * (4*al3)
+
+    # T4 = 8x⁴ - 8x² + 1
+    p[0] += c[4] * (8*be4 - 8*be2 + 1)
+    p[1] += c[4] * (32*be3*al - 16*be*al)
+    p[2] += c[4] * (48*be2*al2 - 8*al2)
+    p[3] += c[4] * (32*be*al3)
+    p[4] += c[4] * (8*al4)
+
+    # Now p is in the power basis. Convert back to Chebyshev basis.
+    # Invert: [T0,T1,T2,T3,T4] -> [1, s', s'^2, s'^3, s'^4]
+    # Power basis -> Chebyshev basis (same order, upper triangular inverse):
+    new_c = np.zeros(5)
+    new_c[4] =  p[4] / 8
+    new_c[3] =  p[3] / 4
+    new_c[2] = (p[2] - 4*new_c[4]) / 2
+    new_c[1] =  p[1] - 3*new_c[3]
+    new_c[0] =  p[0] + new_c[2] - new_c[4]
+
+    return new_c
