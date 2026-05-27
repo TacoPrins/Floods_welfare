@@ -338,11 +338,11 @@ def main():
     vCoeff_C_FullInfo=np.array([ 0.62190337, -0.04657477,  0.00822706,  0.00254822,  0.0029312 ])
     vCoeff_NC_FullInfo=np.array([ 8.36567710e-01,  2.38785227e-02, -3.96488165e-03, -4.07334828e-04, 2.94338367e-03])
     
-    vCoeff_C_MortPrem=np.array([ 0.60098843, -0.03296091,  0.00639342,  0.00396968,  0.00163983])
-    vCoeff_NC_MortPrem=np.array([ 8.21154449e-01,  3.80601753e-02, -6.76252468e-03, -5.80962019e-04, 1.13590997e-03])
+    vCoeff_C_MortPrem=np.array([ 0.60283944, -0.03230899 , 0.00632542 , 0.00427402 , 0.00216904])
+    vCoeff_NC_MortPrem=np.array([ 0.82201948,  0.0387811,  -0.00752305, -0.00082637,  0.00164538])
     
-    vCoeff_C_BuildRest=np.array([ 0.67527158, -0.0074648,   0.005937 ,   0.00115818, -0.00089291])
-    vCoeff_NC_BuildRest=np.array([ 8.32986096e-01 , 1.29340204e-02, -6.26946892e-03,  1.87209805e-03, 5.95771541e-04])
+    vCoeff_C_BuildRest=np.array([ 6.81602502e-01 , -8.07457881e-03 , 3.86486531e-03,  -1.06947614e-04, -2.08610665e-03])
+    vCoeff_NC_BuildRest=np.array([ 8.31532378e-01,  1.05865362e-02, -5.59932690e-03,  2.01406823e-03, 2.95968620e-04])
     plot_creat.plot_price_transition_exp(
         vCoeff_C_initial,
         vCoeff_NC_initial,
@@ -393,17 +393,17 @@ def main():
     # print('price history')
     # print(price_history)
     
-    # print('vCoeff_NC_experiment')
-    # print(vCoeff_NC_experiment)
+    print('vCoeff_NC_experiment')
+    print(vCoeff_NC_experiment)
     
-    # print('vCoeff_C_experiment')
-    # print(vCoeff_C_experiment)
+    print('vCoeff_C_experiment')
+    print(vCoeff_C_experiment)
     
-    # print('dP_NC_vec_experiment')
-    # print(dP_NC_vec_experiment)
+    print('dP_NC_vec_experiment')
+    print(dP_NC_vec_experiment)
     
-    # print('dP_C_vec_experiment')
-    # print(dP_C_vec_experiment)
+    print('dP_C_vec_experiment')
+    print(dP_C_vec_experiment)
     
 ###########################################################
 

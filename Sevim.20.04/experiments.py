@@ -67,7 +67,7 @@ def gen_distribution_now(grids, par, func, method, mMarkov, vCoeff_C, vCoeff_NC,
     mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, _, _, _, _, coastal_mass_J, noncoastal_mass_J, renter_mass_J=sim.stat_dist_finder(sceptics, grids, par, mMarkov, par.iNj, vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,], b_stay_nc[0,], b_renter[0,], vCoeff_C_initial,vCoeff_NC_initial, np.zeros((3)), initial)
     
     experiment=True
-    price_history, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq, vnoncoastal_beq, vsavings_beq, _, _, _, _, _, _, coastal_stock, noncoastal_stock, rental_stock=equil.generate_pricepath(grids, par, func, mMarkov, vCoeff_C,vCoeff_NC, vCoeff_C_initial[0], vCoeff_NC_initial[0], mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, coastal_mass_J, noncoastal_mass_J, renter_mass_J, method, sceptics, experiment = experiment)
+    price_history, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq, vnoncoastal_beq, vsavings_beq, _, _, _, _, _, _, _, _, _=equil.generate_pricepath(grids, par, func, mMarkov, vCoeff_C,vCoeff_NC, vCoeff_C_initial[0], vCoeff_NC_initial[0], mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, coastal_mass_J, noncoastal_mass_J, renter_mass_J, method, sceptics, experiment = experiment)
     return price_history, mDist0_c, mDist0_nc, mDist0_renter, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq, vnoncoastal_beq, vsavings_beq
 
 

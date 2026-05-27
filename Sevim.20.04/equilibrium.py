@@ -53,24 +53,35 @@ def generate_pricepath(grids, par, func, mMarkov, vCoeff_in_C,vCoeff_in_NC, dP_C
     else:
         k_dim=1
     
-    coastal_stock=np.zeros((grids.vTime.size,k_dim))
-    noncoastal_stock=np.zeros((grids.vTime.size,k_dim))
-    rental_stock=np.zeros((grids.vTime.size,k_dim))
+    # coastal_stock=np.zeros((grids.vTime.size,k_dim))
+    # noncoastal_stock=np.zeros((grids.vTime.size,k_dim))
+    # rental_stock=np.zeros((grids.vTime.size,k_dim))
+    
+    full_dist_c=np.zeros((grids.vTime.size, k_dim, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size, grids.vE.size))
+    full_dist_nc=np.zeros((grids.vTime.size, k_dim, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size, grids.vE.size))
+    full_dist_renter=np.zeros((grids.vTime.size, k_dim, grids.vX_sim.size, grids.vE.size))
     
     if plot_stocks==True:
         for k_index in range(k_dim):
-            coastal_stock[0,k_index]=np.sum(mDist0_c[:, k_index, :, :, :, :, :])+coastal_mass_J[k_index]
-            noncoastal_stock[0,k_index]=np.sum(mDist0_nc[:, k_index, :, :, :, :, :])+noncoastal_mass_J[k_index]
-            rental_stock[0,k_index]=np.sum(mDist0_renter[1:, k_index, :, :, :])+renter_mass_J[k_index]
+            for e_index in range(grids.vE.size):
+                for x_index_sim in range(grids.vX_sim.size):
+                    full_dist_renter[0,k_index, x_index_sim, e_index]=np.sum(mDist0_renter[:, k_index, :, x_index_sim, e_index])
+                for m_index_sim in range(grids.vM_sim.size):
+                    for h_index in range(grids.vH.size):
+                        for l_index_sim in range(grids.vL_sim.size):
+                            full_dist_c[0,k_index, m_index_sim, h_index, l_index_sim, e_index]=np.sum(mDist0_c[:, k_index, :, m_index_sim, h_index, l_index_sim, e_index])
+                            full_dist_nc[0,k_index, m_index_sim, h_index, l_index_sim, e_index]=np.sum(mDist0_nc[:, k_index, :, m_index_sim, h_index, l_index_sim, e_index])
+                    
 
-    
+            # coastal_stock[0,k_index]=np.sum(mDist0_c[:, k_index, :, :, :, :, :])+coastal_mass_J[k_index]
+            # noncoastal_stock[0,k_index]=np.sum(mDist0_nc[:, k_index, :, :, :, :, :])+noncoastal_mass_J[k_index]
+            # rental_stock[0,k_index]=np.sum(mDist0_renter[1:, k_index, :, :, :])+renter_mass_J[k_index]
+
     
     for t_index in range(nperiods):  
-
         if t_index==0:
             guess_c = lom.LoM_C(grids,t_index,vCoeff_in_C)
             guess_nc = lom.LoM_NC(grids,t_index,vCoeff_in_NC)
-
         else:
             guess_c = lom.LoM_C(grids,t_index, vCoeff_in_C)+(price_history[t_index-1,0]-lom.LoM_C(grids,t_index-1, vCoeff_in_C))
             guess_nc = lom.LoM_NC(grids,t_index, vCoeff_in_NC)+(price_history[t_index-1,1]-lom.LoM_NC(grids,t_index-1, vCoeff_in_NC))
@@ -121,14 +132,27 @@ def generate_pricepath(grids, par, func, mMarkov, vCoeff_in_C,vCoeff_in_NC, dP_C
             noncoastal_beq0  = (vnoncoastal_beq[t_index])
             savings_beq0 = (vsavings_beq[t_index])
             
+            ##TO DO - ADD MDIST1 DISTRIBUTION FOR AGE 0
+            
             if plot_stocks==True:
+   
                 for k_index in range(k_dim):
-                    coastal_stock[t_index+1,k_index]=np.sum(mDist0_c[:, k_index, :, :, :, :, :])+coastal_mass_J[k_index]
-                    noncoastal_stock[t_index+1,k_index]=np.sum(mDist0_nc[:, k_index, :, :, :, :, :])+noncoastal_mass_J[k_index]
-                    rental_stock[t_index+1,k_index]=np.sum(mDist0_renter[1:, k_index, :, :, :])+renter_mass_J[k_index]
+                    for e_index in range(grids.vE.size):
+                        for x_index_sim in range(grids.vX_sim.size):
+                            full_dist_renter[t_index+1,k_index, x_index_sim, e_index]=np.sum(mDist1_renter[:, k_index, :, x_index_sim, e_index])
+                        for m_index_sim in range(grids.vM_sim.size):
+                            for h_index in range(grids.vH.size):
+                                for l_index_sim in range(grids.vL_sim.size):
+                                    full_dist_c[t_index+1,k_index, m_index_sim, h_index, l_index_sim, e_index]=np.sum(mDist1_c[:, k_index, :, m_index_sim, h_index, l_index_sim, e_index])
+                                    full_dist_nc[t_index+1,k_index, m_index_sim, h_index, l_index_sim, e_index]=np.sum(mDist1_nc[:, k_index, :, m_index_sim, h_index, l_index_sim, e_index])
+                                
+                # for k_index in range(k_dim):
+                #     coastal_stock[t_index+1,k_index]=np.sum(mDist0_c[:, k_index, :, :, :, :, :])+coastal_mass_J[k_index]
+                #     noncoastal_stock[t_index+1,k_index]=np.sum(mDist0_nc[:, k_index, :, :, :, :, :])+noncoastal_mass_J[k_index]
+                #     rental_stock[t_index+1,k_index]=np.sum(mDist0_renter[1:, k_index, :, :, :])+renter_mass_J[k_index]
 
     
-    return price_history, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C1, stock_demand_rental_NC1, vcoastal_beq, vnoncoastal_beq, vsavings_beq, vt_stay_c, vt_stay_nc, vt_renter, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf, coastal_stock, noncoastal_stock, rental_stock
+    return price_history, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C1, stock_demand_rental_NC1, vcoastal_beq, vnoncoastal_beq, vsavings_beq, vt_stay_c, vt_stay_nc, vt_renter, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf, full_dist_c, full_dist_nc, full_dist_renter
     
         
 @njit
