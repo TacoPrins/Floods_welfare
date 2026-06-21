@@ -37,9 +37,11 @@ import moments as mom
 import proper_welfare_debug as welfare_stats
 from numba import config
 from scipy.stats import norm
+import plot_creation as plot_creat
 import moments as find_moments
 import experiments as experiments
-
+import experiment_config as experiment_config
+import solve_model as solve_model
 
 def get_g_colors(grids):
     cmap = plt.get_cmap("tab10")
@@ -284,12 +286,7 @@ def main():
     # import parameters
     #vCoeff_C_initial=np.array([0.72392258, 0.,         0.,         0.,         0.        ])
     #vCoeff_NC_initial=np.array([0.76693964, 0.,         0.,         0.,         0.        ])
-    vCoeff_C_initial=np.array([0.69906474, 0.,         0.,         0.,         0.        ])
-    vCoeff_NC_initial=np.array([0.78259554, 0.,         0.,         0.,         0.        ])
-    vCoeff_C_terminal_RE=np.array([0.58952906 , 0.,0.,0.,0. ])
-    vCoeff_NC_terminal_RE=np.array([0.85484033,0.,0.,0.,0.])
-    vCoeff_C_terminal_HE=np.array([0.64908636, 0.,0.,0.,0. ])
-    vCoeff_NC_terminal_HE=np.array([0.82124315,0.,0.,0.,0.])
+
     
     #vCoeff_C_initial=np.array([0.56, 0.,         0.,         0.,         0.        ])
     #vCoeff_NC_initial=np.array([0.85, 0.,         0.,         0.,         0.        ])
@@ -297,19 +294,28 @@ def main():
     #vCoeff_NC_initial=np.array([0.7170390048443882, 0.,         0.,         0.,         0.        ])
     
 
-    method='secant'
 
     par = misc.construct_jitclass(parfile.par_dict)
-
-    
-    
-    
+    grids=grid_creation.create(par)
+    solve_initial_ss_HE = misc.construct_jitclass(experiment_config.solve_initial_ss_HE)
+    solve_terminal_ss_HE = misc.construct_jitclass(experiment_config.solve_terminal_ss_HE)
+    solve_initial_ss_RE = misc.construct_jitclass(experiment_config.solve_initial_ss_RE)
+    solve_terminal_ss_RE = misc.construct_jitclass(experiment_config.solve_terminal_ss_RE)
+    solve_terminal_ss_building_rest = misc.construct_jitclass(experiment_config.solve_terminal_ss_building_rest)
+    solve_terminal_ss_mortgage_premium = misc.construct_jitclass(experiment_config.solve_terminal_ss_mortgage_premium)
+    find_coeff_path_HE = misc.construct_jitclass(experiment_config.find_coeff_path_HE)
+    find_coeff_path_RE = misc.construct_jitclass(experiment_config.find_coeff_path_RE)
+    path_until_experiment = misc.construct_jitclass(experiment_config.path_until_experiment)
+    experiment_building_rest = misc.construct_jitclass(experiment_config.experiment_building_rest) 
+    experiment_mortgage_prem = misc.construct_jitclass(experiment_config.experiment_mortgage_prem) 
+    vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoeff_C_initial_RE, vCoeff_NC_initial_RE, vCoeff_C_terminal_HE, vCoeff_NC_terminal_HE, vCoeff_C_terminal_RE, vCoeff_NC_terminal_RE, vCoeff_C_terminal_BR, vCoeff_NC_terminal_BR, vCoeff_C_terminal_MP, vCoeff_NC_terminal_MP=solve_model.solve(par, grids, solve_initial_ss_HE, solve_initial_ss_RE, solve_terminal_ss_HE, solve_terminal_ss_RE, solve_terminal_ss_building_rest,solve_terminal_ss_mortgage_premium,find_coeff_path_HE,find_coeff_path_RE, path_until_experiment, experiment_building_rest, experiment_mortgage_prem)
+    print(vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoeff_C_initial_RE, vCoeff_NC_initial_RE, vCoeff_C_terminal_HE, vCoeff_NC_terminal_HE, vCoeff_C_terminal_RE, vCoeff_NC_terminal_RE, vCoeff_C_terminal_BR, vCoeff_NC_terminal_BR, vCoeff_C_terminal_MP, vCoeff_NC_terminal_MP)
     
  
     # create grids
     
-    mMarkov, vE = tauch.tauchen(par.dRho, par.dSigmaeps, par.iNumStates, par.iM, par.time_increment)
-    grids, mMarkov=grid_creation.create(par)
+
+    
     
     
     #Create initial guess for house prices - coastal price falls one to one with flood risk, and noncoastal rises by less than half 
@@ -326,36 +332,29 @@ def main():
     #y_nc=(1+0.25*(par.vPi_S_median-par.vPi_S_median[0]))*vCoeff_NC_initial[0]
     #beta_nc = np.linalg.inv(X.T @ X) @ X.T @ y_nc
 
-    vCoeff_C=np.array([ 0.66335385, -0.03015386,  0.00541847,  0.00797395,  0.00249396])
-    vCoeff_NC=np.array([ 0.81033554,  0.01679082, -0.00574326, -0.00115107,  0.00101112])
-    #NOT CONVERGED YET 
-    vCoeff_C_RE=np.array([ 0.6355361, -0.05750348,0.00171657, 0.00611094,0.00187107])
-    vCoeff_NC_RE=np.array([ 0.82617263, 0.03256824, -0.00530541,-0.00385609,0.00083488])
-    
-    
-    vCoeff_C_experiment=np.array([ 0.62190337, -0.04657477,  0.00822706,  0.00254822,  0.0029312 ])
-    vCoeff_NC_experiment=np.array([ 8.36567710e-01,  2.38785227e-02, -3.96488165e-03, -4.07334828e-04, 2.94338367e-03])
-    
-    method='secant'
-    func=False
-    initial=True
+   
     # sceptics=False 
-    welfare=True
-    # run and save SS without welfare
-    # v_owner_c_wf_SS, v_owner_nc_wf_SS, v_nonowner_wf_SS, _, _, _=household_problem.solve_ss(grids, par, par.iNj, mMarkov,vCoeff_C_initial[0], vCoeff_NC_initial[0], initial, sceptics, welfare)
-    # vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf = household_problem.solve(grids, par, par.iNj, mMarkov,vCoeff_C_RE,vCoeff_NC_RE, sceptics, welfare)
+    # welfare=True
     
-    tax_equiv_C_RE, tax_equiv_NC_RE, tax_equiv_renter_RE, tax_equiv_newborns_RE =  welfare_stats.find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_RE, vCoeff_NC_RE, False)
-    tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns =  welfare_stats.find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C, vCoeff_NC, True)
+    # tax_equiv_C_RE, tax_equiv_NC_RE, tax_equiv_renter_RE, tax_equiv_newborns_RE =  welfare_stats.find_expenditure_equiv_GK_SLR(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_RE, vCoeff_NC_RE, False)
+    # tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns =  welfare_stats.find_expenditure_equiv_GK_SLR(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C, vCoeff_NC, True)
 
 
-    plot_tax_equiv(grids, 100*-tax_equiv_C[:,:], 100*-tax_equiv_NC[:,:], 100*-tax_equiv_renter[:,:], 'Expenditure equivalent - Renters')
-    plot_tax_equiv_newborns(grids, 100*-tax_equiv_newborns[:,:,:])
-    plot_tax_equiv_RE_vs_nonRE(grids,100*-tax_equiv_C,100*-tax_equiv_NC,100*-tax_equiv_renter,100*-tax_equiv_C_RE, 100*-tax_equiv_NC_RE,100*-tax_equiv_renter_RE)
+    # plot_tax_equiv(grids, 100*-tax_equiv_C[:,:], 100*-tax_equiv_NC[:,:], 100*-tax_equiv_renter[:,:], 'Expenditure equivalent - Renters')
+    # plot_tax_equiv_newborns(grids, 100*-tax_equiv_newborns[:,:,:])
+    # plot_tax_equiv_RE_vs_nonRE(grids,100*-tax_equiv_C,100*-tax_equiv_NC,100*-tax_equiv_renter,100*-tax_equiv_C_RE, 100*-tax_equiv_NC_RE,100*-tax_equiv_renter_RE)
 
-    plot_tax_equiv_newborns_RE_vs_nonRE(grids,100*-tax_equiv_newborns,100*-tax_equiv_newborns_RE)
+    # plot_tax_equiv_newborns_RE_vs_nonRE(grids,100*-tax_equiv_newborns,100*-tax_equiv_newborns_RE)
 
-
+    # run experiments:
+    # price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter,  vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = experiments.building_restriction_experiments(par, func, method, vCoeff_C, vCoeff_NC, vCoeff_C_BuildRest, vCoeff_NC_BuildRest, vCoeff_C_initial, vCoeff_NC_initial)    
+    # price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = experiments.mortgage_experiment(par, func, method, vCoeff_C, vCoeff_NC, vCoeff_C_MortPrem, vCoeff_NC_MortPrem, vCoeff_C_initial, vCoeff_NC_initial)    
+    # price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter,  vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = experiments.full_information_experiment(par, func, method,  vCoeff_C, vCoeff_NC, vCoeff_C_FullInfo, vCoeff_NC_FullInfo, vCoeff_C_initial, vCoeff_NC_initial)
+    # print('price history')
+    # print(price_history)
+    
+  
+    
 ###########################################################
 
 ### start main

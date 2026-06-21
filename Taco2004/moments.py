@@ -20,11 +20,11 @@ def calc_moments(par, grids, t_index, mDist_c, mDist_nc,mDist_renter, dPi_S, dPi
     mDist_renter_NC = np.zeros((par.iNj, 1, grids.vG.size, grids.vX_sim.size, grids.vE.size))
       
        
-    dP_C = lom.LoM_C(grids,t_index,vCoeff_C)
-    dP_NC = lom.LoM_NC(grids,t_index,vCoeff_NC)
+    dP_C = lom.LoM(par,grids,t_index,vCoeff_C)
+    dP_NC = lom.LoM(par,grids,t_index,vCoeff_NC)
     
-    dP_C_prime=lom.LoM_C(grids,min(t_index+1,grids.vTime.size-1),vCoeff_C)
-    dP_NC_prime=lom.LoM_NC(grids,min(t_index+1,grids.vTime.size-1),vCoeff_NC)
+    dP_C_prime=lom.LoM(par,grids,min(t_index+1,grids.vTime.size-1),vCoeff_C)
+    dP_NC_prime=lom.LoM(par,grids,min(t_index+1,grids.vTime.size-1),vCoeff_NC)
     #rental_price_c=(par.dPsi+dP_C-dPi_S*((1-par.dDelta-(1-par.dZ))/(1+par.r))*dP_C_prime_flood-
     #(1-dPi_S)*((1-par.dDelta)/(1+par.r))*dP_C_prime_noflood)
     coastal_damage_frac=grids.vPi_S_median[t_index]*np.dot(grids.vPDF_z[1:],(1-grids.vZ[1:]))

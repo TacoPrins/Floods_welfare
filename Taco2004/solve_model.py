@@ -1,0 +1,83 @@
+import numpy as np
+import equilibrium as equil
+import experiments as experiments
+
+
+def solve(par, grids, solve_initial_ss_HE, solve_initial_ss_RE, solve_terminal_ss_HE, solve_terminal_ss_RE, solve_terminal_ss_building_rest,solve_terminal_ss_mortgage_premium,find_coeff_path_HE, find_coeff_path_RE, path_until_experiment, experiment_building_rest, experiment_mortgage_prem):
+    
+    "coefficients 2 different initial steady states"
+    vCoeff_C_initial_HE_guess = np.array([0.69865012, 0., 0., 0., 0.,])
+    vCoeff_NC_initial_HE_guess = np.array([0.78220315, 0., 0., 0., 0.,])
+    vCoeff_C_initial_RE_guess = np.array([0.69865012, 0., 0., 0., 0.,])
+    vCoeff_NC_initial_RE_guess = np.array([0.78220315, 0., 0., 0., 0.,])
+    "coefficients for baseline and rational expectation transitions"
+    vCoeff_C_HE_guess=np.array([ 0.66335385, -0.03015386,  0.00541847,  0.00797395,  0.00249396])
+    vCoeff_NC_HE_guess=np.array([ 0.81033554,  0.01679082, -0.00574326, -0.00115107,  0.00101112])
+    vCoeff_C_RE_guess=np.array([ 0.6355361, -0.05750348,0.00171657, 0.00611094,0.00187107])
+    vCoeff_NC_RE_guess=np.array([ 0.82617263, 0.03256824, -0.00530541,-0.00385609,0.00083488])
+    vCoeff_C_BR_guess=np.array([ 0.6355361, -0.05750348,0.00171657, 0.00611094,0.00187107])
+    vCoeff_NC_BR_guess=np.array([ 0.82617263, 0.03256824, -0.00530541,-0.00385609,0.00083488])
+    vCoeff_C_MP_guess=np.array([ 0.6355361, -0.05750348,0.00171657, 0.00611094,0.00187107])
+    vCoeff_NC_MP_guess=np.array([ 0.82617263, 0.03256824, -0.00530541,-0.00385609,0.00083488])
+
+    
+    ## config solve_initial_ss_RE
+    vCoeff_C_initial_RE, vCoeff_NC_initial_RE, mDist0_c_initial_RE, mDist0_nc_initial_RE, mDist0_renter_initial_RE, rental_stock_C_initial_RE, rental_stock_NC_initial_RE, coastal_beq_initial_RE, noncoastal_beq_initial_RE, savings_beq_initial_RE  = equil.initialise_coefficients_ss(par, grids, vCoeff_C_initial_RE_guess, vCoeff_NC_initial_RE_guess, solve_initial_ss_RE)
+    dP_C_initial_RE=vCoeff_C_initial_RE[0]
+    dP_NC_initial_RE=vCoeff_NC_initial_RE[0]
+    
+    ## config: find_coef_RE
+    _, _, vCoeff_C_RE, vCoeff_NC_RE, _, _, _, _, _, _, _=equil.find_coefficients(par, grids, vCoeff_C_RE_guess, vCoeff_NC_RE_guess,dP_C_initial_RE, dP_NC_initial_RE,mDist0_c_initial_RE, mDist0_nc_initial_RE, mDist0_renter_initial_RE, rental_stock_C_initial_RE, rental_stock_NC_initial_RE, coastal_beq_initial_RE, noncoastal_beq_initial_RE, savings_beq_initial_RE,find_coeff_path_RE)
+
+    #We only simulate the RE distributions forwards without policy experiments, so we don't need to keep the initial distributions 
+    del mDist0_c_initial_RE, mDist0_nc_initial_RE, mDist0_renter_initial_RE
+    
+    ## config solve_initial_ss
+    vCoeff_C_initial_HE, vCoeff_NC_initial_HE,  mDist0_c_initial_HE, mDist0_nc_initial_HE, mDist0_renter_initial_HE, rental_stock_C_initial_HE, rental_stock_NC_initial_HE, coastal_beq_initial_HE, noncoastal_beq_initial_HE, savings_beq_initial_HE  = equil.initialise_coefficients_ss(par, grids, vCoeff_C_initial_HE_guess, vCoeff_NC_initial_HE_guess, solve_initial_ss_HE)
+    dP_C_initial_HE=vCoeff_C_initial_HE[0]
+    dP_NC_initial_HE=vCoeff_NC_initial_HE[0]
+    
+    ## config: find_coef_baseline  
+    _, _, vCoeff_C_HE, vCoeff_NC_HE, _, _, _, _, _, _, _=equil.find_coefficients(par, grids, vCoeff_C_HE_guess, vCoeff_NC_HE_guess,dP_C_initial_HE, dP_NC_initial_HE,mDist0_c_initial_HE, mDist0_nc_initial_HE, mDist0_renter_initial_HE, rental_stock_C_initial_HE, rental_stock_NC_initial_HE, coastal_beq_initial_HE, noncoastal_beq_initial_HE, savings_beq_initial_HE,find_coeff_path_HE)
+    
+        
+    "find distribution in 2026 (experiment year) with generate price path using coefficients from baseline"
+    price_history, mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, rental_stock_C_2026, rental_stock_NC_2026, vcoastal_beq, vnoncoastal_beq, vsavings_beq, _, _, _, _, _, _, _, _, _=equil.generate_pricepath(grids, par, vCoeff_C_HE, vCoeff_NC_HE, dP_C_initial_HE, dP_NC_initial_HE, mDist0_c_initial_HE, mDist0_nc_initial_HE, mDist0_renter_initial_HE, rental_stock_C_initial_HE, rental_stock_NC_initial_HE, coastal_beq_initial_HE, noncoastal_beq_initial_HE, savings_beq_initial_HE, path_until_experiment)
+    dP_C_2026=price_history[-2,0]
+    dP_NC_2026=price_history[-2,1]
+    coastal_beq_2026=vcoastal_beq[-1]
+    noncoastal_beq_2026=vnoncoastal_beq[-1]
+    savings_beq_2026=vsavings_beq[-1]
+    
+    #From this point, we are simulating forward from the experiment year, so delete initial distributions
+    del mDist0_c_initial_HE, mDist0_nc_initial_HE, mDist0_renter_initial_HE 
+    
+    
+    "find coefficients for two experiments using correct initial distributions (2026)"
+    _, _, vCoeff_C_BR, vCoeff_NC_BR, _, _, _, _, _, _, _=equil.find_coefficients(par, grids, vCoeff_C_BR_guess, vCoeff_NC_BR_guess,dP_C_2026, dP_NC_2026,mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, rental_stock_C_2026, rental_stock_NC_2026, coastal_beq_2026, noncoastal_beq_2026, savings_beq_2026,experiment_building_rest)
+
+    "find coefficients for two experiments using correct initial distributions (2026)"
+    _, _, vCoeff_C_MP, vCoeff_NC_MP, _, _, _, _, _, _, _=equil.find_coefficients(par, grids, vCoeff_C_MP_guess, vCoeff_NC_MP_guess,dP_C_2026, dP_NC_2026,mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, rental_stock_C_2026, rental_stock_NC_2026, coastal_beq_2026, noncoastal_beq_2026, savings_beq_2026,experiment_mortgage_prem)
+    
+    "find coefficients for 4 different terminal steady states"
+    vCoeff_C_terminal_RE_guess = np.array([0.58944375, 0., 0., 0., 0.,])
+    vCoeff_NC_terminal_RE_guess = np.array([0.85491565, 0., 0., 0., 0.,])
+    vCoeff_C_terminal_HE_guess = np.array([0.64583997, 0., 0., 0., 0.,])
+    vCoeff_NC_terminal_HE_guess = np.array([0.81916869, 0., 0., 0., 0.,])
+    vCoeff_C_terminal_BR_guess = np.array([0.69186954, 0., 0., 0., 0.,])
+    vCoeff_NC_terminal_BR_guess = np.array([0.83346934, 0., 0., 0., 0.,])
+    vCoeff_C_terminal_MP_guess = np.array([0.64583997, 0., 0., 0., 0.,])
+    vCoeff_NC_terminal_MP_guess = np.array([0.81916869, 0., 0., 0., 0.,])
+    ## config solve_terminal_ss_baseline
+    vCoeff_C_terminal_HE, vCoeff_NC_terminal_HE, _, _, _, _, _, _, _, _   = equil.initialise_coefficients_ss(par, grids, vCoeff_C_terminal_HE_guess, vCoeff_NC_terminal_HE_guess, solve_terminal_ss_HE)
+
+    ## config solve_terminal_ss_RE
+    vCoeff_C_terminal_RE, vCoeff_NC_terminal_RE, _, _, _, _, _, _, _, _ = equil.initialise_coefficients_ss(par, grids, vCoeff_C_terminal_RE_guess, vCoeff_NC_terminal_RE_guess, solve_terminal_ss_RE)
+
+    ## config solve_terminal_ss_building_rest
+    vCoeff_C_terminal_BR, vCoeff_NC_terminal_BR, _, _, _, _, _, _, _, _  = equil.initialise_coefficients_ss(par, grids, vCoeff_C_terminal_BR_guess, vCoeff_NC_terminal_BR_guess, solve_terminal_ss_building_rest)
+
+    ## config solve_terminal_ss_mortgage_premium
+    vCoeff_C_terminal_MP, vCoeff_NC_terminal_MP, _, _, _, _, _, _, _, _ = equil.initialise_coefficients_ss(par, grids, vCoeff_C_terminal_MP_guess, vCoeff_NC_terminal_MP_guess, solve_terminal_ss_mortgage_premium)
+    
+    return vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoeff_C_initial_RE, vCoeff_NC_initial_RE, vCoeff_C_terminal_HE, vCoeff_NC_terminal_HE, vCoeff_C_terminal_RE, vCoeff_NC_terminal_RE, vCoeff_C_terminal_BR, vCoeff_NC_terminal_BR, vCoeff_C_terminal_MP, vCoeff_NC_terminal_MP
