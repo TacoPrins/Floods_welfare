@@ -15,20 +15,19 @@ import simulate_initial_joint as initial_joint_sim
 from numba import njit
 
 @njit
-def find_expenditure_equiv_EK_SLR(par, grids, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_in, vCoeff_NC_in, sceptics=True):
+def find_expenditure_equiv_EK_SLR(par, grids, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_in, vCoeff_NC_in, config):
 
 
     initial = True
     welfare = False
     stop_2026 = False
     # run and save SS without welfare: get stationary dist
-    vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter=household_problem.solve_ss(grids, par,vCoeff_C_initial[0], vCoeff_NC_initial[0], initial, sceptics, welfare)
-    bequest_guess=np.zeros((3))
-    mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, rental_stock_C_out, rental_stock_NC_out, coastal_beq, noncoastal_beq, savings_beq, _, _, _, _,_,_,_=sim.stat_dist_finder(sceptics, grids, par, vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,], b_stay_nc[0,], b_renter[0,], vCoeff_C_initial,vCoeff_NC_initial, bequest_guess, initial)
+    vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter=household_problem.solve_ss(grids, par,vCoeff_C_initial[0], vCoeff_NC_initial[0], config)
+    mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, rental_stock_C_out, rental_stock_NC_out, coastal_beq, noncoastal_beq, savings_beq, _=sim.stat_dist_finder(par, grids, vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,], b_stay_nc[0,], b_renter[0,], vCoeff_C_initial,vCoeff_NC_initial, config)
     
     # get value functions over transition with SLR
     welfare = True
-    if sceptics == False:
+    if config.sceptics == False:
         k_dim=1
     else:
         k_dim=grids.vK.size        

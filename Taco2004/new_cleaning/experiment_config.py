@@ -1,55 +1,37 @@
-solve_initial_ss_HE = {'sceptics': True,
-                    'stop_for_experiment': False,
+solve_initial_ss_HE = {'sceptics': True,                    
                     'welfare': False,
-                    'record_dist': False,
                     'building_rest': False,
                     'mortgage_premium': False,
-                    'run_experiment': False,
                     'initial': True}
 
-solve_initial_ss_RE = {'sceptics': False,
-                    'stop_for_experiment': False,
+solve_initial_ss_RE = {'sceptics': False,                    
                     'welfare': False,
-                    'record_dist': False,
                     'building_rest': False,
                     'mortgage_premium': False,
-                    'run_experiment': False,
                     'initial': True}
 
 solve_terminal_ss_HE  = {'sceptics': True,
-                    'stop_for_experiment': False,
                     'welfare': False,
-                    'record_dist': False,
                     'building_rest': False,
                     'mortgage_premium': False,
-                    'run_experiment': False,
                     'initial': False}
 
 solve_terminal_ss_RE = {'sceptics': False,
-                    'stop_for_experiment': False,
                     'welfare': False,
-                    'record_dist': False,
                     'building_rest': False,
                     'mortgage_premium': False,
-                    'run_experiment': False,
                     'initial': False}
 
 solve_terminal_ss_building_rest = {'sceptics': True,
-                    'stop_for_experiment': False,
                     'welfare': False,
-                    'record_dist': False,
                     'building_rest': True,
                     'mortgage_premium': False,
-                    'run_experiment': False,
                     'initial': False}
 
 solve_terminal_ss_mortgage_premium = {'sceptics': True,
-                    'stop_for_experiment': False,
                     'welfare': False,
-                    'record_dist': False,
                     'building_rest': False,
                     'mortgage_premium': True,
-                    'run_experiment': False,
                     'initial': False}
 
 transition_path = {'sceptics': True,
@@ -58,17 +40,15 @@ transition_path = {'sceptics': True,
             'record_dist': True,
             'building_rest': False,
             'mortgage_premium': False,
-            'run_experiment': False,
-            'initial': True}
+            'run_experiment': False}
 
 path_until_experiment= {'sceptics': True,
             'stop_for_experiment': True,
             'welfare': False,
-            'record_dist': True,
+            'record_dist': False,
             'building_rest': False,
             'mortgage_premium': False,
-            'run_experiment': False,
-            'initial': True}
+            'run_experiment': False}
 
 transition_path_RE = {'sceptics': False,
             'stop_for_experiment': False,
@@ -76,8 +56,7 @@ transition_path_RE = {'sceptics': False,
             'record_dist': True,
             'building_rest': False,
             'mortgage_premium': False,
-            'run_experiment': False,
-            'initial': True}
+            'run_experiment': False}
 
 
 experiment_building_rest = {'sceptics': True,
@@ -86,8 +65,7 @@ experiment_building_rest = {'sceptics': True,
                             'record_dist': True,
                             'building_rest': True,
                             'mortgage_premium': False,
-                            'run_experiment': True,
-                            'initial': True}
+                            'run_experiment': True}
 
 experiment_mortgage_prem = {'sceptics': True,
                             'stop_for_experiment': False,
@@ -95,8 +73,7 @@ experiment_mortgage_prem = {'sceptics': True,
                             'record_dist': True,
                             'building_rest': False,
                             'mortgage_premium': True,
-                            'run_experiment': True,
-                            'initial': True}
+                            'run_experiment': True}
 
 find_coeff_path_HE = {'sceptics': True,
                         'stop_for_experiment': False,

@@ -83,20 +83,20 @@ def solve(grids, par, vCoeff_C,vCoeff_NC, config):
         k_index = int(type_mat[type_index, 0])
         g_index = int(type_mat[type_index, 1])
         for t_index in range(grids.vTime.size-1, t_index_start-1, -1):        
-            dP_C = lom.LoM_C(grids,t_index,vCoeff_C)
-            dP_NC = lom.LoM_NC(grids,t_index,vCoeff_NC)
+            dP_C = lom.LoM(par,grids,t_index,vCoeff_C)
+            dP_NC = lom.LoM(par,grids,t_index,vCoeff_NC)
             t_index_prime=min(t_index+1,grids.vTime.size-1)
             if t_index==grids.vTime.size-1:
                 dPi_S=grids.vPi_S_median[t_index]*arrival_rate_discount[t_index]
                 dPi_L=grids.vPi_L[t_index]
-                dP_C_prime = lom.LoM_C(grids,t_index,vCoeff_C)
-                dP_NC_prime = lom.LoM_NC(grids,t_index,vCoeff_NC)
+                dP_C_prime = lom.LoM(par,grids,t_index,vCoeff_C)
+                dP_NC_prime = lom.LoM(par,grids,t_index,vCoeff_NC)
 
             else:
                 dPi_S=grids.vPi_S_median[t_index+1]*arrival_rate_discount[t_index+1]    
                 dPi_L=grids.vPi_L[t_index+1]
-                dP_C_prime = lom.LoM_C(grids,t_index+1, vCoeff_C)
-                dP_NC_prime = lom.LoM_NC(grids,t_index+1,vCoeff_NC)
+                dP_C_prime = lom.LoM(par,grids,t_index+1, vCoeff_C)
+                dP_NC_prime = lom.LoM(par,grids,t_index+1,vCoeff_NC)
             for h_index in range(grids.vH.size):
                 for l_index in range(grids.vL.size):
                     mortgage_size_C[h_index,l_index]=grids.vL[l_index]*grids.vH[h_index]*dP_C

@@ -59,16 +59,11 @@ def mortgage_shock(grids, par, vCoeff_C_experiment, vCoeff_NC_experiment, price_
 ################################### 
 
 @njit
-def gen_distribution_now(par, grids, vCoeff_C, vCoeff_NC, vCoeff_C_initial, vCoeff_NC_initial, config):
+def gen_distribution_now(par, grids, vCoeff_C, vCoeff_NC, vCoeff_C_initial, vCoeff_NC_initial, mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, config):
     
-
-    vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter,_,_,_ = household_problem.solve_ss(grids, par, vCoeff_C_initial[0],vCoeff_NC_initial[0], config)  
-    bequest_guess=np.zeros((3))                                            
-    mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, _, _, _, _, _, _, _=sim.stat_dist_finder(grids, par, vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,], b_stay_nc[0,], b_renter[0,], vCoeff_C_initial,vCoeff_NC_initial, bequest_guess, config)
-    
-
     price_history, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq, vnoncoastal_beq, vsavings_beq, _, _, _, _, _, _, _, _, _=equil.generate_pricepath(grids, par, vCoeff_C,vCoeff_NC, vCoeff_C_initial[0], vCoeff_NC_initial[0], mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, config)
-    return price_history, mDist0_c, mDist0_nc, mDist0_renter, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq, vnoncoastal_beq, vsavings_beq
+    
+    return price_history, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq, vnoncoastal_beq, vsavings_beq
 
 
 ###################################

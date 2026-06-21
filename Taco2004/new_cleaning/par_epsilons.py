@@ -81,5 +81,6 @@ par_dict = {"time_increment": time_increment,
           'tau_1': 0.151,
           'building_rest': 0.5,
           'starting_year': 1998,
-          'experiment_year': 2026
+          'experiment_year': 2026,
+          'order_polynomial': 4, #The order of the polynomial in the LoM for prices
           }
