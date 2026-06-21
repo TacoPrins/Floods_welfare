@@ -1,9 +1,8 @@
 import numpy as np
 import equilibrium as equil
-import experiments as experiments
 
 
-def solve(par, grids, solve_initial_ss_HE, solve_initial_ss_RE, solve_terminal_ss_HE, solve_terminal_ss_RE, solve_terminal_ss_building_rest,solve_terminal_ss_mortgage_premium,find_coeff_path_HE, find_coeff_path_RE, path_until_experiment, experiment_building_rest, experiment_mortgage_prem):
+def solve(par, grids, solve_initial_ss_HE, solve_initial_ss_RE, solve_terminal_ss_HE, solve_terminal_ss_RE, solve_terminal_ss_building_rest,solve_terminal_ss_mortgage_premium,find_coeff_path_HE, find_coeff_path_RE, path_until_experiment, find_coeff_buildingrest, find_coeff_mortgageprem):
     
     "coefficients 2 different initial steady states"
     vCoeff_C_initial_HE_guess = np.array([0.69865012, 0., 0., 0., 0.,])
@@ -54,10 +53,10 @@ def solve(par, grids, solve_initial_ss_HE, solve_initial_ss_RE, solve_terminal_s
     
     
     "find coefficients for two experiments using correct initial distributions (2026)"
-    _, _, vCoeff_C_BR, vCoeff_NC_BR, _, _, _, _, _, _, _=equil.find_coefficients(par, grids, vCoeff_C_BR_guess, vCoeff_NC_BR_guess,dP_C_2026, dP_NC_2026,mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, rental_stock_C_2026, rental_stock_NC_2026, coastal_beq_2026, noncoastal_beq_2026, savings_beq_2026,experiment_building_rest)
+    _, _, vCoeff_C_BR, vCoeff_NC_BR, _, _, _, _, _, _, _=equil.find_coefficients(par, grids, vCoeff_C_BR_guess, vCoeff_NC_BR_guess,dP_C_2026, dP_NC_2026,mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, rental_stock_C_2026, rental_stock_NC_2026, coastal_beq_2026, noncoastal_beq_2026, savings_beq_2026,find_coeff_buildingrest)
 
     "find coefficients for two experiments using correct initial distributions (2026)"
-    _, _, vCoeff_C_MP, vCoeff_NC_MP, _, _, _, _, _, _, _=equil.find_coefficients(par, grids, vCoeff_C_MP_guess, vCoeff_NC_MP_guess,dP_C_2026, dP_NC_2026,mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, rental_stock_C_2026, rental_stock_NC_2026, coastal_beq_2026, noncoastal_beq_2026, savings_beq_2026,experiment_mortgage_prem)
+    _, _, vCoeff_C_MP, vCoeff_NC_MP, _, _, _, _, _, _, _=equil.find_coefficients(par, grids, vCoeff_C_MP_guess, vCoeff_NC_MP_guess,dP_C_2026, dP_NC_2026,mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, rental_stock_C_2026, rental_stock_NC_2026, coastal_beq_2026, noncoastal_beq_2026, savings_beq_2026,find_coeff_mortgageprem)
     
     "find coefficients for 4 different terminal steady states"
     vCoeff_C_terminal_RE_guess = np.array([0.58944375, 0., 0., 0., 0.,])

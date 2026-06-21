@@ -306,9 +306,9 @@ def main():
     find_coeff_path_HE = misc.construct_jitclass(experiment_config.find_coeff_path_HE)
     find_coeff_path_RE = misc.construct_jitclass(experiment_config.find_coeff_path_RE)
     path_until_experiment = misc.construct_jitclass(experiment_config.path_until_experiment)
-    experiment_building_rest = misc.construct_jitclass(experiment_config.experiment_building_rest) 
-    experiment_mortgage_prem = misc.construct_jitclass(experiment_config.experiment_mortgage_prem) 
-    vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoeff_C_initial_RE, vCoeff_NC_initial_RE, vCoeff_C_terminal_HE, vCoeff_NC_terminal_HE, vCoeff_C_terminal_RE, vCoeff_NC_terminal_RE, vCoeff_C_terminal_BR, vCoeff_NC_terminal_BR, vCoeff_C_terminal_MP, vCoeff_NC_terminal_MP=solve_model.solve(par, grids, solve_initial_ss_HE, solve_initial_ss_RE, solve_terminal_ss_HE, solve_terminal_ss_RE, solve_terminal_ss_building_rest,solve_terminal_ss_mortgage_premium,find_coeff_path_HE,find_coeff_path_RE, path_until_experiment, experiment_building_rest, experiment_mortgage_prem)
+    find_coeff_buildingrest = misc.construct_jitclass(experiment_config.find_coeff_buildingrest) 
+    find_coeff_mortgageprem = misc.construct_jitclass(experiment_config.find_coeff_mortgageprem) 
+    vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoeff_C_initial_RE, vCoeff_NC_initial_RE, vCoeff_C_terminal_HE, vCoeff_NC_terminal_HE, vCoeff_C_terminal_RE, vCoeff_NC_terminal_RE, vCoeff_C_terminal_BR, vCoeff_NC_terminal_BR, vCoeff_C_terminal_MP, vCoeff_NC_terminal_MP=solve_model.solve(par, grids, solve_initial_ss_HE, solve_initial_ss_RE, solve_terminal_ss_HE, solve_terminal_ss_RE, solve_terminal_ss_building_rest,solve_terminal_ss_mortgage_premium,find_coeff_path_HE,find_coeff_path_RE, path_until_experiment, find_coeff_buildingrest, find_coeff_mortgageprem)
     print(vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoeff_C_initial_RE, vCoeff_NC_initial_RE, vCoeff_C_terminal_HE, vCoeff_NC_terminal_HE, vCoeff_C_terminal_RE, vCoeff_NC_terminal_RE, vCoeff_C_terminal_BR, vCoeff_NC_terminal_BR, vCoeff_C_terminal_MP, vCoeff_NC_terminal_MP)
     
  
