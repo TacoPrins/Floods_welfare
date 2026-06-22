@@ -3,7 +3,7 @@ LoM.py
 """
 ###########################################################
 ### Imports
-
+import numpy as np
 from numba import njit
 
 ###########################################################
@@ -29,3 +29,10 @@ def LoM(par, grids,t_index,vCoeff):
     
     return dP
     
+@njit    
+def LoM_path(par, grids, vCoeff):
+    """Evaluate Chebyshev price LoM over the full time grid. Returns array."""
+    out = np.empty(grids.vTime.size)
+    for t_index in range(grids.vTime.size):
+        out[t_index] = LoM(par, grids, t_index, vCoeff)
+    return out
