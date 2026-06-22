@@ -12,12 +12,12 @@ import interp as interpfun
 import LoM_epsilons as lom
 
 @njit
-def calc_moments(par, grids, t_index, mDist_c, mDist_nc,mDist_renter, dPi_S, dPi_L, vCoeff_C, vCoeff_NC):
+def calc_moments(par, grids, t_index, mDist_c, mDist_nc,mDist_renter, vCoeff_C, vCoeff_NC):
     
     
     ##Filling the coastal and non-coastal renter matrices
-    mDist_renter_C = np.zeros((par.iNj, 1, grids.vG.size, grids.vX_sim.size, grids.vE.size))
-    mDist_renter_NC = np.zeros((par.iNj, 1, grids.vG.size, grids.vX_sim.size, grids.vE.size))
+    mDist_renter_C = np.zeros((par.iNj, grids.vK.size, grids.vG.size, grids.vX_sim.size, grids.vE.size))
+    mDist_renter_NC = np.zeros((par.iNj, grids.vK.size, grids.vG.size, grids.vX_sim.size, grids.vE.size))
       
        
     dP_C = lom.LoM(par,grids,t_index,vCoeff_C)
@@ -130,8 +130,8 @@ def homeowner_renter_shares(grids, g_indiff, mDist_c, mDist_nc,mDist_renter_C,mD
     R_C_share = renters_coastal_share*renters_total
     R_NC_share =(1-renters_coastal_share)*renters_total
     
-    HO_C_share_before35 = np.sum(mDist_c[:7,])/(7/mDist_c.shape[0])
-    HO_NC_share_before35 = np.sum(mDist_nc[:7,])/(7/mDist_c.shape[0])
+    HO_C_share_before35 = np.sum(mDist_c[:8,])/(8/mDist_c.shape[0])
+    HO_NC_share_before35 = np.sum(mDist_nc[:8,])/(8/mDist_c.shape[0])
     
     HO_C_share_death = np.sum(mDist_c[-1,])/(1/mDist_c.shape[0])
     HO_NC_share_death = np.sum(mDist_nc[-1,])/(1/mDist_c.shape[0]) # or equivalently * 30 for equal sized cohorts.
@@ -288,10 +288,10 @@ def end_of_life_NW(par, grids, dP_C, dP_NC, mDist_c, mDist_nc,mDist_renter_C,mDi
                 ltv = grids.vL_sim[l_index_sim]
 
                 # Net worth depends only on (m,h,l)
-                mNet_worth_c[m_index_sim, h_index, l_index_sim] = m + (1-ltv*(1.0+par.r_m)-par.dDelta)*house_value_C
-                mNet_worth_nc[m_index_sim, h_index, l_index_sim] = m + (1-ltv*(1.0+par.r_m)-par.dDelta)*house_value_NC
-                mHouse_wealth_share_c[m_index_sim, h_index, l_index_sim] = max(((1-ltv*(1.0+par.r_m)-par.dDelta)*house_value_C),0)/( m + (1-ltv*(1.0+par.r_m)-par.dDelta)*house_value_C)
-                mHouse_wealth_share_nc[m_index_sim, h_index, l_index_sim] = max(((1-ltv*(1.0+par.r_m)-par.dDelta)*house_value_NC),0)/(m + (1-ltv*(1.0+par.r_m)-par.dDelta)*house_value_NC)
+                mNet_worth_c[m_index_sim, h_index, l_index_sim] = m + (1-ltv*(1.0+par.r_m_c)-par.dDelta)*house_value_C
+                mNet_worth_nc[m_index_sim, h_index, l_index_sim] = m + (1-ltv*(1.0+par.r_m_nc)-par.dDelta)*house_value_NC
+                mHouse_wealth_share_c[m_index_sim, h_index, l_index_sim] = max(((1-ltv*(1.0+par.r_m_c)-par.dDelta)*house_value_C),0)/( m + (1-ltv*(1.0+par.r_m_c)-par.dDelta)*house_value_C)
+                mHouse_wealth_share_nc[m_index_sim, h_index, l_index_sim] = max(((1-ltv*(1.0+par.r_m_nc)-par.dDelta)*house_value_NC),0)/(m + (1-ltv*(1.0+par.r_m_nc)-par.dDelta)*house_value_NC)
 
                 # Sum density over (k,g,e)
                 acc_c_age_27 = 0.0
@@ -522,7 +522,7 @@ def underwater_mass_jhl(par, grids, mDist_c, mDist_nc):
 
     for l_index in range(L):
         ltv = grids.vL_sim[l_index]
-        equity_factor = 1.0 - ltv * (1.0 + par.r_m) - par.dDelta  # sign drives underwater if h>0
+        equity_factor = 1.0 - ltv * (1.0 + par.r_m_c) - par.dDelta  # sign drives underwater if h>0
 
         if equity_factor < 0.0:
             for h_index in range(H):
