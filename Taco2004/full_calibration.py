@@ -136,7 +136,7 @@ def f(x,grad):
     grids, mMarkov=grid_creation.create(par)        
     method='secant'
     dP_C_guess, dP_NC_guess, vCoeff_C_new, vCoeff_NC_new, mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, no_beq, iteration=equil.initialise_coefficients_initial(par, grids, method, dPi_L, par.iNj, mMarkov, vCoeff_C_initial, vCoeff_NC_initial, bequest_guess)      
-    vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter = household_problem.solve_initial(grids, par, dPi_L, par.iNj, mMarkov, vCoeff_C_new[0],vCoeff_NC_new[0])
+    vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter = household_problem.solve_ss(grids, par, dPi_L, par.iNj, mMarkov, vCoeff_C_new[0],vCoeff_NC_new[0])
     mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, vcoastal_beq, vnoncoastal_beq, vsavings_beq, no_beq=sim.stat_dist_finder(False, grids, par, mMarkov, dPi_L, par.iNj, vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,], b_stay_nc[0,], b_renter[0,], vCoeff_C_new,vCoeff_NC_new, np.zeros((3)))
     dP_C_lom=lom.LoM_C(grids,0, vCoeff_C_new)
     dP_NC_lom=lom.LoM_NC(grids,0, vCoeff_NC_new)

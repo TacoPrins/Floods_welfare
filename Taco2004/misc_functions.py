@@ -364,12 +364,12 @@ def ols_numba(X, Y):
 
 
 @njit 
-def net_income(par, grids, j, e_index, e_trans_index, mortgage_size):
+def net_income(par, grids, j, e_index, e_trans_index, mortgage_size, mortgage_rate):
     if j<par.j_ret:
         pretax_income=np.exp(grids.vChi[j] + grids.vE[e_index]+ grids.vE_trans[e_trans_index])
     else:
         pretax_income=0.7*np.exp(grids.vChi[par.j_ret-1] + grids.vE[e_index])
-    posttax_income=pretax_income-par.tau_0*(max(pretax_income-par.r_m*mortgage_size*grids.median_inc,0))**(1-par.tau_1)
+    posttax_income=pretax_income-par.tau_0*(max(pretax_income-mortgage_rate*mortgage_size*grids.median_inc,0))**(1-par.tau_1)
     mortgage_rebate=par.tau_0*(pretax_income)**(1-par.tau_1)-(pretax_income-posttax_income)
     ##Normalise with pre-tax median income
     net_income=(posttax_income/grids.median_inc)*(1-par.wf_wedge[0])    

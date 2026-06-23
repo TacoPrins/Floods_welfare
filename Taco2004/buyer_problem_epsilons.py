@@ -8,7 +8,7 @@ import utility_epsilons as ut
 import interp as interpfun
 
 @njit
-def solve(par, grids, j_index, k_index, g_index, e_index, dP, mVt_stayer, mC_pol_stayer, mVt_stayer_wf, welfare):
+def solve(par, grids, j_index, k_index, g_index, e_index, dP, max_mortgage_pti, mVt_stayer, mC_pol_stayer, mVt_stayer_wf, config):
     
     j=j_index
     g=grids.vG[g_index]
@@ -16,8 +16,6 @@ def solve(par, grids, j_index, k_index, g_index, e_index, dP, mVt_stayer, mC_pol
     mVt = np.ones((grids.vX.size))*-1e12
     mVt_wf = np.ones((grids.vX.size))*-1e12
     mQt = np.zeros((grids.vX.size))     
-    
-    max_mortgage_pti=grids.mPTI[j_index,e_index] 
 
     for x_index in range(grids.vX.size):
         x=grids.vX[x_index]
@@ -41,7 +39,7 @@ def solve(par, grids, j_index, k_index, g_index, e_index, dP, mVt_stayer, mC_pol
                             assert C_pol > 0
                             mVt[x_index] = Vt_candidate                                  
                             mQt[x_index] = -1/ut.u_c(j,C_pol,h,g+par.dOmega, par) 
-                            if welfare == True:
+                            if config.welfare == True:
                                 mVt_wf[x_index] = interpfun.interp_1d(grids.vM,mVt_stayer_wf[:,h_index, l_index],m_buyer)
 
                     if m_buyer>grids.vM[-1]:
@@ -51,7 +49,7 @@ def solve(par, grids, j_index, k_index, g_index, e_index, dP, mVt_stayer, mC_pol
                             assert C_pol > 0
                             mVt[x_index] = Vt_candidate                                  
                             mQt[x_index] = -1/ut.u_c(j,C_pol,h,g+par.dOmega, par) 
-                            if welfare == True:
+                            if config.welfare == True:
                                 mVt_wf[x_index] = -1/(-1/mVt_stayer_wf[-1,h_index, l_index]+ut.u(j,C_pol,h,g+par.dOmega, par)-ut.u(j,mC_pol_stayer[-1,h_index, l_index],h,g+par.dOmega, par))
        
 

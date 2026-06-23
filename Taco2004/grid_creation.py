@@ -1,10 +1,11 @@
 import misc_functions as misc    
 import tauchen as tauch
+import pandas as pd
 import numpy as np
 import grids as grid
 from scipy.optimize import brentq
 
-def create(par, experiment=False):
+def create(par, start_2026=False, mortgage_premium = False):
        
     # create grids
     mMarkov, vE = tauch.tauchen(par.dRho, par.dSigmaeps, par.iNumStates, par.iM, par.time_increment)
@@ -27,26 +28,36 @@ def create(par, experiment=False):
     min_inc=(np.exp(vChi[0] + vE[0])-par.tau_0*np.exp(vChi[0] + vE[0])**(1-par.tau_1))/median_inc
    
     #construct lti vector as function of age
-    mPTI=np.zeros((par.iNj, vE.size))
+    mPTI_C=np.zeros((par.iNj, vE.size))
+    mPTI_NC=np.zeros((par.iNj, vE.size))
+    if mortgage_premium == False:
+        mortgage_rate_c = par.r_m_c
+    elif mortgage_premium == True:
+        mortgage_rate_c = par.r_m_c_experiment 
+        
     for j_index in range(par.iNj-1):
         for e_index in range(vE.size):
-            mPTI[j_index,e_index]=max_mortgage_size(par, j_index, e_index, vChi, vE)/median_inc
+            mPTI_C[j_index,e_index]=max_mortgage_size(par, j_index, e_index, vChi, vE, mortgage_rate_c)/median_inc
+            mPTI_NC[j_index,e_index]=max_mortgage_size(par, j_index, e_index, vChi, vE, par.r_m_nc)/median_inc
         
+    
+    
 
-    if experiment:
-        vPi_S_median=par.vPi_S_median[int((2026-1998)/par.time_increment):]
-    else:
-        vPi_S_median=par.vPi_S_median    
+    
+
+  
     vZ= np.array([1, 0.9, 0.7, 0.3])
     vPDF_z= np.array([1, 0.4, 0.4, 0.2])
-
+    
+    #WARNING - RETHINK FOR INCREASING CURVE
+    vPi_L=np.ones(len(par.vPi_S_median))*par.vPi_S_median[0]
 
     vL_sim=np.linspace(0, 1.5, 35)
     #vH=  np.array([1.50, 1.92, 2.46, 3.15, 4.03, 5.15])
     vH=np.linspace(1.50,par.h_max,3)
     vH_renter=np.array([1.17, 1.92])
     
-    vPi_L=np.ones(len(vPi_S_median))*vPi_S_median[0]
+   
     
     
     #We want to have equal and narrow grid spacing over the range where discrete decisions vary with income. 
@@ -112,7 +123,10 @@ def create(par, experiment=False):
     vX_sim=grid.nonlinspace_jit(0, par.iBmax, par.iNb*2, 1)
     vM_sim=vX_sim #vX_sim and vM_sim are clunkily named savings grids for simulation with twice the grid points
     
-    
+    mTypes = np.ones((len(par.vPi_S_median), 2))
+    concern_vec = pd.read_excel("concern_forecast.xlsx", usecols=[1], header=None).to_numpy().ravel()
+    mTypes[0:len(concern_vec)-1,0]=concern_vec[0:-1] #Explanatory note: we force jump to no sceptics in 2100; hence 2100 entry of concern_vec overwritten with 1
+    mTypes[:,1]= 1-mTypes[:,0]  
     grids_dict = {'vB': vB,
                   "vH":  vH,
                   "vH_renter":  vH_renter,
@@ -128,42 +142,42 @@ def create(par, experiment=False):
                   'vE_trans': vE_trans, 
                   'median_inc': median_inc,
                   'median_inc_pretax': median_inc_pretax,
-                  'vTime': np.arange(0,len(vPi_S_median)),
+                  'vTime': np.arange(0,len(par.vPi_S_median)),
                   'vZ': vZ,   
                   'vPDF_z':vPDF_z,
                   'vChi': vChi,
                   'min_inc': min_inc,
+                  'mMarkov': mMarkov,
                   #'mIncome': np.exp(vChi[:, np.newaxis, np.newaxis] + vE[np.newaxis, :, np.newaxis] + vE_trans[np.newaxis, np.newaxis, :]) /median_inc,
                   #'mIncome_pers': mIncome_pers,
                   #'vIncome_ret': mIncome_pers[par.j_ret-1,:]*0.7,
                   'median_inc': median_inc,
                   'mMarkov_trans': mMarkov_trans[0,:],
-                  'vEpsilon': np.array([0,1]),
-                  'vLkeps':np.linspace(0,5,2),
-                  'mPTI': mPTI,
-                  'vPi_S_median': vPi_S_median,
-                  'vTypes': np.array([0.58, 0.42]),
+                  'mPTI_C': mPTI_C,
+                  'mPTI_NC': mPTI_NC,
+                  'vPi_S_median': par.vPi_S_median,
+                  'mTypes': mTypes,
                   'max_ltv': par.max_ltv, 
                   'vPi_E': vPi_E,
                   'vPi_L': vPi_L}
 
     grids = misc.construct_jitclass(grids_dict)
     
-    return grids, mMarkov
+    return grids
 
-def net_payment_frac(mortgage_size, par, j, e_index, vChi, vE):
+def net_payment_frac(mortgage_size, par, j, e_index, vChi, vE, mortgage_rate):
     if j<par.j_ret:
         pretax_income_pers=np.exp(vChi[j] + vE[e_index])
     else:
         pretax_income_pers=0.7*np.exp(vChi[par.j_ret-1] + vE[e_index])   
-    posttax_income=pretax_income_pers-par.tau_0*(max(pretax_income_pers-par.r_m*mortgage_size,0))**(1-par.tau_1)
+    posttax_income=pretax_income_pers-par.tau_0*(max(pretax_income_pers-mortgage_rate*mortgage_size,0))**(1-par.tau_1)
     mortgage_rebate=par.tau_0*(pretax_income_pers)**(1-par.tau_1)-(posttax_income-pretax_income_pers)
-    payment_next = (par.r_m*(1+par.r_m)**(par.iNj-(j+1))/((1+par.r_m)**(par.iNj-(j+1))-1))*mortgage_size-mortgage_rebate
+    payment_next = (mortgage_rate*(1+mortgage_rate)**(par.iNj-(j+1))/((1+mortgage_rate)**(par.iNj-(j+1))-1))*mortgage_size-mortgage_rebate
     pti_gap=payment_next/posttax_income-par.lambda_pti
     return pti_gap
 
 
-def max_mortgage_size(par, j, e_index, vChi, vE,
+def max_mortgage_size(par, j, e_index, vChi, vE, mortgage_rate,
                       m_min=0.0, m_max=10000000):
     """
     Finds the maximum mortgage size such that
@@ -171,14 +185,14 @@ def max_mortgage_size(par, j, e_index, vChi, vE,
     """
 
     # If even zero mortgage violates the constraint, return 0
-    if net_payment_frac(m_min, par, j, e_index, vChi, vE) > 0:
+    if net_payment_frac(m_min, par, j, e_index, vChi, vE, mortgage_rate) > 0:
         return 0.0
 
     # Ensure upper bound actually violates the constraint
-    if net_payment_frac(m_max, par, j, e_index, vChi, vE) < 0:
+    if net_payment_frac(m_max, par, j, e_index, vChi, vE, mortgage_rate) < 0:
         raise ValueError("m_max too small — increase the upper search bound.")
 
     # Solve pti(m) = par.pti
-    m_star = brentq(net_payment_frac, m_min, m_max, args=(par, j, e_index, vChi, vE))
+    m_star = brentq(net_payment_frac, m_min, m_max, args=(par, j, e_index, vChi, vE, mortgage_rate))
 
     return m_star

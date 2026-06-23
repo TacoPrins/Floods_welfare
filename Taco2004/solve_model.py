@@ -65,7 +65,7 @@ def solve(par, grids, solve_initial_ss_HE, solve_initial_ss_RE, solve_terminal_s
     vCoeff_NC_terminal_HE_guess = np.array([0.81916869, 0., 0., 0., 0.,])
     vCoeff_C_terminal_BR_guess = np.array([0.69186954, 0., 0., 0., 0.,])
     vCoeff_NC_terminal_BR_guess = np.array([0.83346934, 0., 0., 0., 0.,])
-    vCoeff_C_terminal_MP_guess = np.array([0.64583997, 0., 0., 0., 0.,])
+    vCoeff_C_terminal_MP_guess = np.array([0.58747094, 0., 0., 0., 0.,])
     vCoeff_NC_terminal_MP_guess = np.array([0.81916869, 0., 0., 0., 0.,])
     ## config solve_terminal_ss_baseline
     vCoeff_C_terminal_HE, vCoeff_NC_terminal_HE, _, _, _, _, _, _, _, _   = equil.initialise_coefficients_ss(par, grids, vCoeff_C_terminal_HE_guess, vCoeff_NC_terminal_HE_guess, solve_terminal_ss_HE)
