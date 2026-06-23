@@ -146,8 +146,8 @@ def find_coefficients(par, grids, vCoeff_C, vCoeff_NC,dP_C_initial, dP_NC_initia
 
         print('Coefficients C', vCoeff_C)
         print('Coefficients NC', vCoeff_NC)
-        dP_C_lom=lom.LoM(par,grids,np.arange(grids.vTime.size),vCoeff_C)
-        dP_NC_lom=lom.LoM(par,grids,np.arange(grids.vTime.size),vCoeff_NC)
+        dP_C_lom=lom.LoM_path(par,grids,vCoeff_C, config)
+        dP_NC_lom=lom.LoM_path(par,grids,vCoeff_NC, config)
         print('price C lom: median SLR', dP_C_lom)
         print('price NC lom: median SLR', dP_NC_lom)
         

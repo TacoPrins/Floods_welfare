@@ -149,7 +149,8 @@ def excess_demand_continuous(use_stock_clearing, grids, par, t_index, mDist0_c, 
         mortgage_rate_c = par.r_m_c_experiment 
     
     if config.building_rest == True:
-        arrival_rate_discount = (1-par.dDelta)**grids.vTime[t_index] + (1-(1-par.dDelta)**grids.vTime[t_index])*(1-par.dMitigation_rate)
+        t_index_start=int((par.experiment_year-par.starting_year)/par.time_increment)
+        arrival_rate_discount = (1-par.dDelta)**grids.vTime[t_index-t_index_start] + (1-(1-par.dDelta)**grids.vTime[t_index-t_index_start])*(1-par.dMitigation_rate)
     else:
         arrival_rate_discount = 1 
     
@@ -408,7 +409,8 @@ def update_dist_continuous(grids, par, t_index, mDist0_c, mDist0_nc, mDist0_rent
     minpay_matrix_C, ltv_minpay_index_left_C, minpay_matrix_NC, ltv_minpay_index_left_NC, max_ltv_C,max_ltv_NC, max_ltv_index_C, max_ltv_index_NC=mortgage_matrix_solve(par, grids, dP_C_lag, dP_NC_lag, dP_C, dP_NC, mortgage_rate_c)
 
     if config.building_rest == True:
-        arrival_rate_discount = (1-par.dDelta)**grids.vTime[t_index] + (1-(1-par.dDelta)**grids.vTime[t_index])*(1-par.dMitigation_rate)
+        t_index_start=int((par.experiment_year-par.starting_year)/par.time_increment)
+        arrival_rate_discount = (1-par.dDelta)**grids.vTime[t_index-t_index_start] + (1-(1-par.dDelta)**grids.vTime[t_index-t_index_start])*(1-par.dMitigation_rate)
     else:
         arrival_rate_discount = 1     
 

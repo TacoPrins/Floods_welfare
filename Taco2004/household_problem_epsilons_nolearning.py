@@ -74,8 +74,8 @@ def solve(grids, par, vCoeff_C,vCoeff_NC, config):
     g_index_nc=int((grids.vG.size-1)/2)
     assert grids.vG[g_index_nc]==1
     
-    if config.building_rest == True:
-        arrival_rate_discount = (1-par.dDelta)**grids.vTime + (1-(1-par.dDelta)**grids.vTime)*(1-par.dMitigation_rate)
+    if config.building_rest == True:        
+        arrival_rate_discount = (1-par.dDelta)**(grids.vTime-t_index_start) + (1-(1-par.dDelta)**(grids.vTime-t_index_start))*(1-par.dMitigation_rate)
     else:
         arrival_rate_discount = np.ones((grids.vTime.size))
     
@@ -238,16 +238,16 @@ def solve_ss(grids, par, dCoeff_C, dCoeff_NC, config):
         t_index=grids.vTime.size-1
     
     if config.building_rest == True:
-        arrival_rate_discount = (1-par.dDelta)**grids.vTime + (1-(1-par.dDelta)**grids.vTime)*(1-par.dMitigation_rate)
+        arrival_rate_discount = (1-par.dMitigation_rate)
     else:
-        arrival_rate_discount = np.ones((grids.vTime.size))
+        arrival_rate_discount = 1
     
     for k_index in range(k_dim):
         for g_index in range(grids.vG.size):
             if config.initial == True:
-                dPi_S=par.vPi_S_median[0]*arrival_rate_discount[0]
+                dPi_S=par.vPi_S_median[0]
             else:
-                dPi_S = par.vPi_S_median[-1]*arrival_rate_discount[-1]
+                dPi_S = par.vPi_S_median[-1]*arrival_rate_discount
             for j in range(par.iNj-1, -1, -1):
                 if j == par.iNj-1:
                     w_c_last,q_c_last, w_c_wf_last = continuation_value_epsilons.solve_last_period_owners_C(par, grids,  dPi_S, dPi_L, k_index, dP_C_prime,mortgage_size_C, config)
