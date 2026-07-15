@@ -5,33 +5,42 @@ LoM.py
 ### Imports
 
 from numba import njit
-
+import numpy as np
 
 ###########################################################
 ### Functions
 ###########################################################
 @njit
-def LoM_C(grids,t_index,vCoeff_C):
+def LoM(par, grids,t_index,vCoeff):
     t=grids.vTime[t_index]
     t_cheby=(2*t-(grids.vTime[0]+grids.vTime[-1]))/(grids.vTime[-1]-grids.vTime[0])
-    t_1=t_cheby
-    t_2=2*t_cheby**2-1
-    t_3=4*t_cheby**3-3*t_cheby
-    t_4=8*t_cheby**4-8*t_cheby**2+1
- 
-
-    P_c = vCoeff_C[0]+vCoeff_C[1]*t_1+vCoeff_C[2]*t_2+vCoeff_C[3]*t_3+vCoeff_C[4]*t_4
+    dP = vCoeff[0]  
     
-    return P_c
-@njit
-def LoM_NC(grids,t_index,vCoeff_NC):
-    t=grids.vTime[t_index]
-    t_cheby=(2*t-(grids.vTime[0]+grids.vTime[-1]))/(grids.vTime[-1]-grids.vTime[0])
-    t_1=t_cheby
-    t_2=2*t_cheby**2-1
-    t_3=4*t_cheby**3-3*t_cheby
-    t_4=8*t_cheby**4-8*t_cheby**2+1       
+    poly_curr_min_2 = 1.0
+    poly_curr_min_1 = t_cheby  
+    
+    if par.order_polynomial >= 1:
+        dP += vCoeff[1] *  poly_curr_min_1
+    
+    for n in range(2, par.order_polynomial + 1):
+        poly_curr = 2*t_cheby*poly_curr_min_1 - poly_curr_min_2
+        dP += vCoeff[n] * poly_curr
+        poly_curr_min_2 = poly_curr_min_1
+        poly_curr_min_1 = poly_curr
+    
+    return dP
 
-    P_nc = vCoeff_NC[0]+vCoeff_NC[1]*t_1+vCoeff_NC[2]*t_2+vCoeff_NC[3]*t_3+vCoeff_NC[4]*t_4
-      
-    return P_nc
+@njit    
+def LoM_path(par, grids, vCoeff, config):
+    """Evaluate Chebyshev price LoM over the full time grid. Returns array."""
+    if config.run_experiment:
+        t_index_start=int((par.experiment_year-par.starting_year)/par.time_increment)
+    else:
+        t_index_start=0
+    
+    t_index_stop=grids.vTime.size
+    nr_periods=t_index_stop-t_index_start
+    out = np.empty(nr_periods)
+    for t_index in range(nr_periods):
+        out[t_index] = LoM(par, grids, t_index+t_index_start, vCoeff)
+    return out

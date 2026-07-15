@@ -13,16 +13,15 @@ import buyer_problem_simulation as buy_sim
 import numba as nb
 import utility_epsilons as ut
 import mortgage_choice_simulation as mortgage_sim
-import mortgage_choice_simulation_exc as mortgage_sim_exc
 import simulate_initial_joint as initial_joint_sim
 import tauchen as tauch
 
 
    
 @njit
-def stat_dist_finder(sceptics, grids, par, mMarkov, iNj, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vCoeff_in_C,vCoeff_in_NC, bequest_guess, initial):
+def stat_dist_finder(par, grids, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vCoeff_in_C,vCoeff_in_NC, config, bequest_guess=np.zeros((3))):
 
-   if initial==True:
+   if config.initial==True:
        t_index=0
    else:
        t_index=grids.vTime.size-1
@@ -31,8 +30,8 @@ def stat_dist_finder(sceptics, grids, par, mMarkov, iNj, vt_stay_c, vt_stay_nc, 
    noncoastal_beq=bequest_guess[1]
    savings_beq=bequest_guess[2] 
    
-   dP_C_lom=lom.LoM_C(grids,0, vCoeff_in_C)
-   dP_NC_lom=lom.LoM_NC(grids,0, vCoeff_in_NC)
+   dP_C_lom=lom.LoM(par,grids,0, vCoeff_in_C)
+   dP_NC_lom=lom.LoM(par,grids,0, vCoeff_in_NC)
    dP_C_lag=dP_C_lom
    dP_NC_lag=dP_NC_lom
    
@@ -46,17 +45,17 @@ def stat_dist_finder(sceptics, grids, par, mMarkov, iNj, vt_stay_c, vt_stay_nc, 
    vnoncoastal_beq[0]=noncoastal_beq
    vsavings_beq[0]=savings_beq
    
-   if sceptics==False:
+   if config.sceptics==False:
        k_dim=1 
    else:
        k_dim=2
        
-   mDist0_c = np.zeros((iNj, k_dim, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size,grids.vE.size))
-   mDist0_nc = np.zeros((iNj, k_dim, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size,grids.vE.size))
-   mDist0_renter = np.zeros((iNj, k_dim, grids.vG.size, grids.vX_sim.size, grids.vE.size))
-   mDist1_c = np.zeros((iNj, k_dim, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size,grids.vE.size))
-   mDist1_nc = np.zeros((iNj, k_dim, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size,grids.vE.size))
-   mDist1_renter = np.zeros((iNj, k_dim, grids.vG.size, grids.vX_sim.size, grids.vE.size))       
+   mDist0_c = np.zeros((par.iNj, k_dim, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size,grids.vE.size))
+   mDist0_nc = np.zeros((par.iNj, k_dim, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size,grids.vE.size))
+   mDist0_renter = np.zeros((par.iNj, k_dim, grids.vG.size, grids.vX_sim.size, grids.vE.size))
+   mDist1_c = np.zeros((par.iNj, k_dim, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size,grids.vE.size))
+   mDist1_nc = np.zeros((par.iNj, k_dim, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size,grids.vE.size))
+   mDist1_renter = np.zeros((par.iNj, k_dim, grids.vG.size, grids.vX_sim.size, grids.vE.size))       
    
        
    for it_outer in range(1,max_it):
@@ -68,13 +67,13 @@ def stat_dist_finder(sceptics, grids, par, mMarkov, iNj, vt_stay_c, vt_stay_nc, 
        mDist1_renter[:,:,:,:,:] = 0
        rental_stock_C_out=0 
        rental_stock_NC_out=0
-       for it in range(0,iNj):               
+       for it in range(0,par.iNj):               
            if it>0:
                mDist0_c = mDist1_c
                mDist0_nc = mDist1_nc
                mDist0_renter = mDist1_renter
-                    
-           mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, coastal_beq, noncoastal_beq, savings_beq, no_beq, coastal_mass_J, noncoastal_mass_J, renter_mass_J= update_dist_continuous(sceptics, True, it, True, grids, par, t_index, mMarkov, iNj, mDist0_c, mDist0_nc, mDist0_renter, dP_C_lom, dP_NC_lom, vt_stay_c, vt_stay_nc,  vt_renter, b_stay_c, b_stay_nc, b_renter,  coastal_beq, noncoastal_beq, savings_beq,vCoeff_in_C,vCoeff_in_NC, dP_C_lag, dP_NC_lag)
+           stationary = True         
+           mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, coastal_beq, noncoastal_beq, savings_beq, no_beq= update_dist_continuous(grids, par, t_index, mDist0_c, mDist0_nc, mDist0_renter, dP_C_lom, dP_NC_lom, vt_stay_c, vt_stay_nc,  vt_renter, b_stay_c, b_stay_nc, b_renter,  coastal_beq, noncoastal_beq, savings_beq,vCoeff_in_C,vCoeff_in_NC, dP_C_lag, dP_NC_lag, config, stationary, it)
            rental_stock_C_out+=stock_demand_rental_C
            rental_stock_NC_out+=stock_demand_rental_NC
        vcoastal_beq[it_outer]=coastal_beq
@@ -88,10 +87,10 @@ def stat_dist_finder(sceptics, grids, par, mMarkov, iNj, vt_stay_c, vt_stay_nc, 
            print("No steady state convergence")
   
  
-   return mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C_out, rental_stock_NC_out, coastal_beq, noncoastal_beq, savings_beq, vcoastal_beq, vnoncoastal_beq, vsavings_beq, no_beq, coastal_mass_J, noncoastal_mass_J, renter_mass_J
+   return mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C_out, rental_stock_NC_out, coastal_beq, noncoastal_beq, savings_beq, no_beq
   
 @njit
-def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov, iNj, mDist0_c, mDist0_nc, mDist0_renter, dP_C, dP_NC,  vt_stay_c, vt_stay_nc, vt_renter, b_stay_c,  b_stay_nc, b_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq,vCoeff_in_C,vCoeff_in_NC, dP_C_lag, dP_NC_lag, building_rest = False, mortgage_premium = False):
+def excess_demand_continuous(use_stock_clearing, grids, par, t_index, mDist0_c, mDist0_nc, mDist0_renter, dP_C, dP_NC,  vt_stay_c, vt_stay_nc, vt_renter, b_stay_c,  b_stay_nc, b_renter, rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq,vCoeff_in_C,vCoeff_in_NC, dP_C_lag, dP_NC_lag, config):
     
     #print("Price in:", dP_C, dP_NC)
     demand_C=0
@@ -108,21 +107,21 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
     default_stock_NC=0
     dPi_S=grids.vPi_S_median[t_index]   
     
-    if building_rest == True:
+    if config.building_rest == True:
         cost_shifter = par.building_rest_cost
     else:
         cost_shifter = 0
     
-    if sceptics==False:
+    if config.sceptics==False:
         k_dim=1 
     else:
         k_dim=2
           
-    dP_C_growth_lom=lom.LoM_C(grids,t_index,vCoeff_in_C)-lom.LoM_C(grids,max(t_index-1,0), vCoeff_in_C)
-    dP_NC_growth_lom=lom.LoM_NC(grids,t_index, vCoeff_in_NC)-lom.LoM_NC(grids,max(t_index-1,0), vCoeff_in_NC)
+    dP_C_growth_lom=lom.LoM(par,grids,t_index,vCoeff_in_C)-lom.LoM(par,grids,max(t_index-1,0), vCoeff_in_C)
+    dP_NC_growth_lom=lom.LoM(par,grids,t_index, vCoeff_in_NC)-lom.LoM(par,grids,max(t_index-1,0), vCoeff_in_NC)
     
-    dP_C_growth_prime_lom=lom.LoM_C(grids,min(t_index+1,grids.vTime.size-1),vCoeff_in_C)-lom.LoM_C(grids,t_index,vCoeff_in_C)
-    dP_NC_growth_prime_lom=lom.LoM_NC(grids,min(t_index+1,grids.vTime.size-1),vCoeff_in_NC)-lom.LoM_NC(grids,t_index,vCoeff_in_NC)
+    dP_C_growth_prime_lom=lom.LoM(par,grids,min(t_index+1,grids.vTime.size-1),vCoeff_in_C)-lom.LoM(par,grids,t_index,vCoeff_in_C)
+    dP_NC_growth_prime_lom=lom.LoM(par,grids,min(t_index+1,grids.vTime.size-1),vCoeff_in_NC)-lom.LoM(par,grids,t_index,vCoeff_in_NC)
     
     dP_C_lom=dP_C_lag+dP_C_growth_lom
     dP_NC_lom=dP_NC_lag+dP_NC_growth_lom
@@ -144,40 +143,30 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
     rental_price_lom_NC=par.dPsi+max(dP_NC_lom -(1-par.dDelta)/(1+par.r)*dP_NC_prime_lom,0)
     
     mortgage_rate_nc=par.r_m_nc
-    if mortgage_premium == False:
+    if config.mortgage_premium == False:
         mortgage_rate_c = par.r_m_c
-    elif mortgage_premium == True:
+    elif config.mortgage_premium == True:
         mortgage_rate_c = par.r_m_c_experiment 
     
-    if building_rest == True:
-        arrival_rate_discount = (1-par.dDelta)**grids.vTime[t_index] + (1-(1-par.dDelta)**grids.vTime[t_index])*(1-par.dMitigation_rate)
+    if config.building_rest == True:
+        t_index_start=int((par.experiment_year-par.starting_year)/par.time_increment)
+        arrival_rate_discount = (1-par.dDelta)**grids.vTime[t_index-t_index_start] + (1-(1-par.dDelta)**grids.vTime[t_index-t_index_start])*(1-par.dMitigation_rate)
+        # print('arrival_rate_discount sim,', arrival_rate_discount)
     else:
         arrival_rate_discount = 1 
     
     
     minpay_matrix_C, ltv_minpay_index_left_C, minpay_matrix_NC, ltv_minpay_index_left_NC, max_ltv_C,max_ltv_NC, max_ltv_index_C, max_ltv_index_NC=mortgage_matrix_solve(par, grids, dP_C_lag, dP_NC_lag, dP_C, dP_NC, mortgage_rate_c)
     
-    
-    
-    
-    housing_bequest=coastal_beq*(1-coastal_damage_frac-par.dDelta)*dP_C + noncoastal_beq*(1-par.dDelta)*dP_NC
-    total_bequest = (housing_bequest+savings_beq*(1+par.r))*par.iNj
-    mPi_joint=initial_joint_sim.initial_joint(par, grids, total_bequest)
-    for k_index in range(k_dim):
-        if sceptics==True:
-            k_weight=grids.vTypes[k_index]
-        else:
-            k_weight=1.
-        for g_index in range(grids.vG.size):
-            mDist0_renter[0,k_index,g_index,:,:]= (1/iNj)*k_weight*(1/grids.vG.size)*mPi_joint
-    
+    mDist_age_0_renter=gen_initial_dist(par, grids, t_index, dP_C, dP_NC, coastal_beq, noncoastal_beq, savings_beq, config.sceptics)
     mDist0_c[0,:,:,:,:,:,:]=0
     mDist0_nc[0,:,:,:,:,:,:]=0
+    mDist0_renter[0,:,:,:,:]=mDist_age_0_renter
     
    
 
     mass=np.empty((grids.vM_sim.size))
-    for j in range(iNj):     
+    for j in range(par.iNj):     
         for e_index in range(grids.vE.size):
             # coastal homeowners        
             for k_index in range(k_dim):     
@@ -211,14 +200,14 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
                                         mass[m_index_sim] = income_mass*prob_dZ*mDist0_c[j,k_index,g_index,m_index_sim,h_index,l_index_sim,e_index]
                                     mass_pos_idx=np.where(mass>0)[0]                               
                                     #For stayers, interpolate value function at cash in hand 
-                                    vt_stay_c_sim= mortgage_sim_exc.solve(par,grids,vt_stay_c_input[:,h_index,:],j,h, e, dZ, dP_C,mortgage_start,max_ltv_index_C[j,h_index,e_index], minpay_matrix_C[j, h_index, l_index_sim], ltv_minpay_index_left_C[j, h_index, l_index_sim],mass_pos_idx, mortgage_rate_c) 
+                                    vt_stay_c_sim,_,_= mortgage_sim.solve(par,grids,vt_stay_c_input[:,h_index,:],j,h, e, dZ, dP_C,mortgage_start,max_ltv_index_C[j,h_index,e_index], minpay_matrix_C[j, h_index, l_index_sim], ltv_minpay_index_left_C[j, h_index, l_index_sim],mass_pos_idx, mortgage_rate_c) 
                                     x_sell_vec=grids.vM_sim+e+(1-(1-dZ)-par.dDelta-par.dKappa_sell)*h*dP_C-(1+mortgage_rate_c)*mortgage_start
                                     vt_buy_c, h_pol_C, _, _,_ =buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_C, vt_stay_c_input,dP_C_lom,max_ltv_C[j,:,e_index],max_ltv_index_C[j,:,e_index],mass_pos_idx)
                                     vt_buy_nc, h_pol_NC, _, _,_ =buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_NC, vt_stay_nc_input,dP_NC_lom,max_ltv_NC[j,:,e_index],max_ltv_index_NC[j,:,e_index],mass_pos_idx)
                                     
-                                    vt_renter_sim, h_renter = renter_sim_demand(False, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, x_sell_vec, mass_pos_idx)
+                                    vt_renter_sim, h_renter = renter_sim_demand(False, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, x_sell_vec, mass_pos_idx)
                                     if (1+mortgage_rate_c)*mortgage_start>(1-par.dDelta-par.dKappa_sell-(1-dZ))*h*dP_C:
-                                        vt_default, h_default = renter_sim_demand(True, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
+                                        vt_default, h_default = renter_sim_demand(True, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
                                     else:
                                         vt_default=np.ones(grids.vM_sim.size)*-1e12
                                         h_default=np.zeros(grids.vM_sim.size)                                     
@@ -252,14 +241,14 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
                                 for m_index_sim in range(grids.vM_sim.size):                                            
                                     mass[m_index_sim] = income_mass*mDist0_nc[j,k_index,g_index,m_index_sim,h_index,l_index_sim,e_index]
                                 mass_pos_idx=np.where(mass>0)[0]
-                                vt_stay_nc_sim= mortgage_sim_exc.solve(par,grids,vt_stay_nc_input[:,h_index,:],j,h, e,1, dP_NC,mortgage_start,max_ltv_index_NC[j,h_index,e_index], minpay_matrix_NC[j, h_index, l_index_sim], ltv_minpay_index_left_NC[j, h_index, l_index_sim],mass_pos_idx, mortgage_rate_nc)
+                                vt_stay_nc_sim,_,_= mortgage_sim.solve(par,grids,vt_stay_nc_input[:,h_index,:],j,h, e,1, dP_NC,mortgage_start,max_ltv_index_NC[j,h_index,e_index], minpay_matrix_NC[j, h_index, l_index_sim], ltv_minpay_index_left_NC[j, h_index, l_index_sim],mass_pos_idx, mortgage_rate_nc)
                                 x_sell_vec = grids.vM_sim+e+(1-par.dDelta-par.dKappa_sell)*h*dP_NC-(1+par.r_m_nc)*mortgage_start
                                 vt_buy_c, h_pol_C, _, _,_ =buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_C, vt_stay_c_input,dP_C_lom,max_ltv_C[j,:,e_index],max_ltv_index_C[j,:,e_index],mass_pos_idx)
                                 vt_buy_nc, h_pol_NC, _, _,_ =buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_NC, vt_stay_nc_input,dP_NC_lom,max_ltv_NC[j,:,e_index],max_ltv_index_NC[j,:,e_index],mass_pos_idx)
                                              
-                                vt_renter_sim, h_renter = renter_sim_demand(False, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter,x_sell_vec, mass_pos_idx)
+                                vt_renter_sim, h_renter = renter_sim_demand(False, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter,x_sell_vec, mass_pos_idx)
                                 if (1+par.r_m_nc)*mortgage_start>(1-par.dDelta-par.dKappa_sell)*h*dP_NC:
-                                    vt_default, h_default = renter_sim_demand(True, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
+                                    vt_default, h_default = renter_sim_demand(True, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
                                 else:
                                     vt_default=np.ones(grids.vM_sim.size)*-1e12
                                     h_default=np.zeros(grids.vM_sim.size)
@@ -288,7 +277,7 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
 
                         vt_buy_c, h_pol_C, _, _,_ =buy_sim.solve(par, grids,-1,grids.vX_sim+e, j, dP_C, vt_stay_c_input,dP_C_lom,max_ltv_C[j,:,e_index],max_ltv_index_C[j,:,e_index],mass_pos_idx)
                         vt_buy_nc, h_pol_NC, _, _,_ =buy_sim.solve(par, grids,-1,grids.vX_sim+e, j, dP_NC, vt_stay_nc_input,dP_NC_lom,max_ltv_NC[j,:,e_index],max_ltv_index_NC[j,:,e_index],mass_pos_idx)
-                        vt_renter_sim, h_renter = renter_sim_demand(False, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vX_sim+e, mass_pos_idx)
+                        vt_renter_sim, h_renter = renter_sim_demand(False, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vX_sim+e, mass_pos_idx)
                                 
                         mass_rent,mass_buyc,mass_buync = continuous_decide_renter(grids,vt_buy_c, vt_buy_nc, vt_renter_sim, mass)
               
@@ -322,29 +311,22 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
 
    
     # return excess_demand_C, excess_demand_NC
-    if initialise:
+    if use_stock_clearing:
         print("prices:",dP_C, dP_NC) 
         print("Rental prices:", rental_price_C, rental_price_NC)
-        print("Excess demands:",excess_demand_C_stock, excess_demand_NC_stock)
-        #print("Flow excess demands:",excess_demand_C_flow, excess_demand_NC_flow)
-        #print("Net demands:", demand_C-supply_C, demand_NC-supply_NC)
-        #print("Owner demands:", stayer_demand_C+demand_C, stayer_demand_NC+demand_NC)
-        #print("Depreciation difference:", (stayer_demand_C+demand_C)*par.dDelta-depreciation_C, (stayer_demand_NC+demand_NC)*par.dDelta-depreciation_NC)
+        print("Excess demands:",excess_demand_C_stock, excess_demand_NC_stock)        
         print("Rental demands:",stock_demand_rental_C, stock_demand_rental_NC)
         return excess_demand_C_stock, excess_demand_NC_stock, net_demand_C, net_demand_NC, investment_C, investment_NC, stock_demand_rental_C, rental_stock_C, stock_demand_rental_NC, rental_stock_NC
     else:
         print("prices:",dP_C, dP_NC)   
         print("Rental prices:", rental_price_C, rental_price_NC)
-        print("Excess demands:",excess_demand_C_flow, excess_demand_NC_flow)
-        #print("Net demands:", demand_C-supply_C, demand_NC-supply_NC)
-        #print("Owner demands:", stayer_demand_C+demand_C, stayer_demand_NC+demand_NC)
-        #print("Depreciation difference:", (stayer_demand_C+demand_C)*par.dDelta-depreciation_C, (stayer_demand_NC+demand_NC)*par.dDelta-depreciation_NC)
+        print("Excess demands:",excess_demand_C_flow, excess_demand_NC_flow)        
         print("Rental demands:",stock_demand_rental_C, stock_demand_rental_NC)
         return excess_demand_C_flow, excess_demand_NC_flow, net_demand_C, net_demand_NC, investment_C, investment_NC, stock_demand_rental_C, rental_stock_C, stock_demand_rental_NC, rental_stock_NC
 
 
 @njit
-def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_index, mMarkov, iNj, mDist0_c, mDist0_nc, mDist0_renter, dP_C, dP_NC, vt_stay_c, vt_stay_nc,  vt_renter, b_stay_c, b_stay_nc, b_renter,  coastal_beq, noncoastal_beq, savings_beq,vCoeff_in_C,vCoeff_in_NC, dP_C_lag, dP_NC_lag, building_rest = False,mortgage_premium = False):
+def update_dist_continuous(grids, par, t_index, mDist0_c, mDist0_nc, mDist0_renter, dP_C, dP_NC, vt_stay_c, vt_stay_nc,  vt_renter, b_stay_c, b_stay_nc, b_renter,  coastal_beq, noncoastal_beq, savings_beq,vCoeff_in_C,vCoeff_in_NC, dP_C_lag, dP_NC_lag, config, stationary=False, it=0):
     
     default_mass_rational=0
     default_mass_sceptic=0
@@ -352,7 +334,7 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
     stock_demand_rental_NC=0.0
     dPi_S=grids.vPi_S_median[t_index]
     
-    if sceptics==False:
+    if config.sceptics==False:
         k_dim=1 
     else:
         k_dim=2
@@ -362,19 +344,19 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
         mDist1_nc = mDist0_nc
         mDist1_renter = mDist0_renter          
     else:
-        if sceptics==True:
+        if config.sceptics==True:
             k_dim=2
         else:
             k_dim=1
-        mDist1_c = np.zeros((iNj, k_dim, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size, grids.vE.size))
-        mDist1_nc = np.zeros((iNj, k_dim, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size, grids.vE.size))
-        mDist1_renter = np.zeros((iNj, k_dim, grids.vG.size, grids.vX_sim.size, grids.vE.size))
+        mDist1_c = np.zeros((par.iNj, k_dim, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size, grids.vE.size))
+        mDist1_nc = np.zeros((par.iNj, k_dim, grids.vG.size, grids.vM_sim.size, grids.vH.size, grids.vL_sim.size, grids.vE.size))
+        mDist1_renter = np.zeros((par.iNj, k_dim, grids.vG.size, grids.vX_sim.size, grids.vE.size))
            
-    dP_C_growth_lom=lom.LoM_C(grids,t_index,vCoeff_in_C)-lom.LoM_C(grids,max(t_index-1,0), vCoeff_in_C)
-    dP_NC_growth_lom=lom.LoM_NC(grids,t_index, vCoeff_in_NC)-lom.LoM_NC(grids,max(t_index-1,0), vCoeff_in_NC)
+    dP_C_growth_lom=lom.LoM(par,grids,t_index,vCoeff_in_C)-lom.LoM(par,grids,max(t_index-1,0), vCoeff_in_C)
+    dP_NC_growth_lom=lom.LoM(par,grids,t_index, vCoeff_in_NC)-lom.LoM(par,grids,max(t_index-1,0), vCoeff_in_NC)
     
-    dP_C_growth_prime_lom=lom.LoM_C(grids,min(t_index+1,grids.vTime.size-1),vCoeff_in_C)-lom.LoM_C(grids,t_index,vCoeff_in_C)
-    dP_NC_growth_prime_lom=lom.LoM_NC(grids,min(t_index+1,grids.vTime.size-1),vCoeff_in_NC)-lom.LoM_NC(grids,t_index,vCoeff_in_NC)
+    dP_C_growth_prime_lom=lom.LoM(par,grids,min(t_index+1,grids.vTime.size-1),vCoeff_in_C)-lom.LoM(par,grids,t_index,vCoeff_in_C)
+    dP_NC_growth_prime_lom=lom.LoM(par,grids,min(t_index+1,grids.vTime.size-1),vCoeff_in_NC)-lom.LoM(par,grids,t_index,vCoeff_in_NC)
     
     dP_C_lom=dP_C_lag+dP_C_growth_lom
     dP_NC_lom=dP_NC_lag+dP_NC_growth_lom
@@ -386,63 +368,56 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
     dP_NC_prime_lom=dP_NC_lom+dP_NC_growth_prime_lom
     
     
-    #THIS IS CUMULATIVE OVER TIME INTERVAL WHEREAS INT RATE IS YEARLY
+
     coastal_damage_frac=grids.vPi_S_median[t_index]*np.dot(grids.vPDF_z[1:],(1-grids.vZ[1:]))
-    
     rental_price_C=par.dPsi+max(dP_C-(1-par.dDelta-coastal_damage_frac)/(1+par.r)*dP_C_prime,0)
     rental_price_NC=par.dPsi+max(dP_NC-(1-par.dDelta)/(1+par.r)*dP_NC_prime,0)
     
     rental_price_lom_C=par.dPsi+max(dP_C_lom -(1-par.dDelta-coastal_damage_frac)/(1+par.r)*dP_C_prime_lom,0)
-    rental_price_lom_NC=par.dPsi+max(dP_NC_lom -(1-par.dDelta)/(1+par.r)*dP_NC_prime_lom,0)
-    
-    coastal_mass_J=np.zeros((k_dim))
-    noncoastal_mass_J=np.zeros((k_dim))
-    renter_mass_J=np.zeros((k_dim))
-    
+    rental_price_lom_NC=par.dPsi+max(dP_NC_lom -(1-par.dDelta)/(1+par.r)*dP_NC_prime_lom,0)   
+  
         
     if stationary==False or it==0:
-        housing_bequest=coastal_beq*(1-coastal_damage_frac-par.dDelta)*dP_C + noncoastal_beq*(1-par.dDelta)*dP_NC
-        total_bequest = (housing_bequest+savings_beq*(1+par.r))*par.iNj
-        mPi_joint=initial_joint_sim.initial_joint(par, grids, total_bequest)
-        for k_index in range(k_dim):
-            if sceptics==True:
-                k_weight=grids.vTypes[k_index]
-            else:
-                k_weight=1.
-            for g_index in range(grids.vG.size):
-                mDist0_renter[0,k_index,g_index,:,:]= (1/iNj)*k_weight*(1/grids.vG.size)*mPi_joint
-        
+        mDist_age_0_renter=gen_initial_dist(par, grids, t_index, dP_C, dP_NC, coastal_beq, noncoastal_beq, savings_beq, config.sceptics)
         mDist0_c[0,:,:,:,:,:,:]=0
         mDist0_nc[0,:,:,:,:,:,:]=0
-
+        mDist0_renter[0,:,:,:,:]=mDist_age_0_renter
+        
+        
     coastal_beq = 0
     noncoastal_beq = 0
     savings_beq = 0
     no_beq=0    
       
     mortgage_rate_nc=par.r_m_nc
-    if mortgage_premium == False:
+    if config.mortgage_premium == False:
         mortgage_rate_c = par.r_m_c
-    elif mortgage_premium == True:
+    elif config.mortgage_premium == True:
         mortgage_rate_c = par.r_m_c_experiment 
         
     minpay_matrix_C, ltv_minpay_index_left_C, minpay_matrix_NC, ltv_minpay_index_left_NC, max_ltv_C,max_ltv_NC, max_ltv_index_C, max_ltv_index_NC=mortgage_matrix_solve(par, grids, dP_C_lag, dP_NC_lag, dP_C, dP_NC, mortgage_rate_c)
 
-    if building_rest == True:
-        arrival_rate_discount = (1-par.dDelta)**grids.vTime[t_index] + (1-(1-par.dDelta)**grids.vTime[t_index])*(1-par.dMitigation_rate)
+    if config.building_rest == True:
+        t_index_start=int((par.experiment_year-par.starting_year)/par.time_increment)
+        arrival_rate_discount = (1-par.dDelta)**grids.vTime[t_index-t_index_start] + (1-(1-par.dDelta)**grids.vTime[t_index-t_index_start])*(1-par.dMitigation_rate)
     else:
         arrival_rate_discount = 1     
 
     #Initialise since may not be filled in the function
     mass=np.empty((grids.vM_sim.size))  
     
-    for j in range(iNj):
+    for j in range(par.iNj):
         if stationary==True and j!=it:
             continue        
         #Find the expenditure shares of the final good and housing for renters
      
         for e_index in range(grids.vE.size):
             for k_index in range(k_dim):
+                if k_index==1 and stationary==False and grids.mTypes[t_index,1]>1e-8:
+                    belief_switching_frac=-(grids.mTypes[t_index+1,1]-grids.mTypes[t_index,1])/grids.mTypes[t_index,1]
+                    # print(belief_switching_frac)
+                else:
+                    belief_switching_frac=0.
                 for g_index in range(grids.vG.size):
                     h_share_lom, w_lom, h_share, w, rental_price_lom, rental_price, coastal_rent_share, g_renter_lom, g_renter=renter_solve(par, grids, g_index, rental_price_lom_C, rental_price_lom_NC, rental_price_C, rental_price_NC)
                     b_stay_c_input, b_stay_nc_input = b_stay_c[j, k_index, g_index,  :, :, :, e_index], b_stay_nc[j, k_index, g_index,  :, :, :, e_index]
@@ -484,9 +459,9 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
                                     vt_buy_c, _,h_pol_C_index,ltv_pol_C_max, ltv_pol_C_index =buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_C, vt_stay_c_input,dP_C_lom,max_ltv_C[j,:,e_index],max_ltv_index_C[j,:,e_index],mass_pos_idx)
                                     vt_buy_nc, _, h_pol_NC_index,ltv_pol_NC_max, ltv_pol_NC_index =buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_NC, vt_stay_nc_input,dP_NC_lom,max_ltv_NC[j,:,e_index],max_ltv_index_NC[j,:,e_index],mass_pos_idx)
                                                    
-                                    vt_renter_sim = renter_sim(False, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, x_sell_vec, mass_pos_idx)
+                                    vt_renter_sim = renter_sim(False, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, x_sell_vec, mass_pos_idx)
                                     if (1+mortgage_rate_c)*mortgage_start>(1-par.dDelta-par.dKappa_sell-(1-dZ))*h*dP_C:
-                                        vt_default = renter_sim(True, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
+                                        vt_default = renter_sim(True, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
                                     else:
                                         vt_default=np.ones(grids.vM_sim.size)*-1e12
                                     mass_stay,mass_rent,mass_buyc,mass_buync,mass_default = continuous_decide(grids,vt_stay_c_sim, vt_buy_c, vt_buy_nc, vt_renter_sim,vt_default,mass)
@@ -497,36 +472,31 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
                                         if mass_stay[m_index_sim]>0:
                                             b_stay_c_sim = misc.interp_2d(grids.vM, grids.vL, b_stay_c_input[:,h_index,:], m_out[m_index_sim], ltv_stay_c_sim[m_index_sim])
                                             if j<par.j_ret-1:
-                                                mDist1_c, coastal_beq, savings_beq = simulate_stay(par, grids, iNj, mMarkov, mDist1_c, mass_stay[m_index_sim], h_index,e_index, k_index, g_index, j, b_stay_c_sim, ltv_stay_c_sim[m_index_sim], coastal_beq, savings_beq)
+                                                mDist1_c, coastal_beq, savings_beq = simulate_stay(par, grids, mDist1_c, mass_stay[m_index_sim], h_index,e_index, k_index, g_index, j, b_stay_c_sim, ltv_stay_c_sim[m_index_sim], coastal_beq, savings_beq,belief_switching_frac)
                                             else:
-                                                mDist1_c, coastal_beq, savings_beq = simulate_stay_ret(par, grids, iNj, mMarkov, mDist1_c, mass_stay[m_index_sim], h_index,e_index, k_index, g_index, j, b_stay_c_sim, ltv_stay_c_sim[m_index_sim], coastal_beq, savings_beq)
-                                            if j==par.iNj-1:
-                                                coastal_mass_J[k_index]+=mass_stay[m_index_sim]                                        
+                                                mDist1_c, coastal_beq, savings_beq = simulate_stay_ret(par, grids, mDist1_c, mass_stay[m_index_sim], h_index,e_index, k_index, g_index, j, b_stay_c_sim, ltv_stay_c_sim[m_index_sim], coastal_beq, savings_beq,belief_switching_frac)
+                                      
                                         if mass_buyc[m_index_sim]>0:
-                                            mDist1_c, coastal_beq, savings_beq = simulate_buy_outer(par, grids, iNj, mMarkov, mDist1_c, dP_C, mass_buyc[m_index_sim],  j, k_index, g_index, h_index,e_index, h_pol_C_index[m_index_sim], max_ltv_C[j,h_pol_C_index[m_index_sim],e_index], ltv_pol_C_max[m_index_sim], ltv_pol_C_index[m_index_sim], b_stay_c_input, x_sell, coastal_beq, savings_beq)
-                                            if j==par.iNj-1:
-                                                coastal_mass_J[k_index]+=mass_buyc[m_index_sim]   
+                                            mDist1_c, coastal_beq, savings_beq = simulate_buy_outer(par, grids, mDist1_c, dP_C, mass_buyc[m_index_sim],  j, k_index, g_index, h_index,e_index, h_pol_C_index[m_index_sim], max_ltv_C[j,h_pol_C_index[m_index_sim],e_index], ltv_pol_C_max[m_index_sim], ltv_pol_C_index[m_index_sim], b_stay_c_input, x_sell, coastal_beq, savings_beq,belief_switching_frac)
+
                                         if mass_buync[m_index_sim]>0:
-                                            mDist1_nc, noncoastal_beq, savings_beq = simulate_buy_outer(par, grids, iNj, mMarkov, mDist1_nc, dP_NC, mass_buync[m_index_sim],  j, k_index, g_index, h_index,e_index, h_pol_NC_index[m_index_sim], max_ltv_NC[j,h_pol_NC_index[m_index_sim],e_index], ltv_pol_NC_max[m_index_sim], ltv_pol_NC_index[m_index_sim], b_stay_nc_input, x_sell, noncoastal_beq, savings_beq)
-                                            if j==par.iNj-1:
-                                                noncoastal_mass_J[k_index]+=mass_buync[m_index_sim]   
+                                            mDist1_nc, noncoastal_beq, savings_beq = simulate_buy_outer(par, grids, mDist1_nc, dP_NC, mass_buync[m_index_sim],  j, k_index, g_index, h_index,e_index, h_pol_NC_index[m_index_sim], max_ltv_NC[j,h_pol_NC_index[m_index_sim],e_index], ltv_pol_NC_max[m_index_sim], ltv_pol_NC_index[m_index_sim], b_stay_nc_input, x_sell, noncoastal_beq, savings_beq,belief_switching_frac)
+
                                         if mass_rent[m_index_sim]>0:
-                                            mDist1_renter, h_renter_sim, savings_beq, no_beq= simulate_rent_outer(par, grids, iNj, mMarkov, mDist1_renter, mass_rent[m_index_sim], j,  k_index, g_index, e_index, savings_beq, b_renter_input, x_sell, h_share, rental_price, no_beq)                   
+                                            mDist1_renter, h_renter_sim, savings_beq, no_beq= simulate_rent_outer(par, grids, mDist1_renter, mass_rent[m_index_sim], j,  k_index, g_index, e_index, savings_beq, b_renter_input, x_sell, h_share, rental_price, no_beq,belief_switching_frac)                   
                                             stock_demand_rental_C+=mass_rent[m_index_sim]*h_renter_sim*coastal_rent_share
                                             stock_demand_rental_NC+=mass_rent[m_index_sim]*h_renter_sim*(1-coastal_rent_share)                                        
-                                            if j==par.iNj-1:
-                                                renter_mass_J[k_index]+=mass_rent[m_index_sim]
+
                                         if mass_default[m_index_sim]>0:
                                             m = grids.vM_sim[m_index_sim]+e-mortgage_rebate
-                                            mDist1_renter, h_renter_sim, savings_beq, no_beq= simulate_rent_outer(par, grids, iNj, mMarkov, mDist1_renter, mass_default[m_index_sim], j,  k_index, g_index, e_index, savings_beq, b_renter_input, m, h_share, rental_price, no_beq)                   
+                                            mDist1_renter, h_renter_sim, savings_beq, no_beq= simulate_rent_outer(par, grids, mDist1_renter, mass_default[m_index_sim], j,  k_index, g_index, e_index, savings_beq, b_renter_input, m, h_share, rental_price, no_beq,belief_switching_frac)                   
                                             stock_demand_rental_C+=mass_default[m_index_sim]*h_renter_sim*coastal_rent_share
                                             stock_demand_rental_NC+=mass_default[m_index_sim]*h_renter_sim*(1-coastal_rent_share)                                            
                                             if k_index==0:
                                                 default_mass_rational+=mass_default[m_index_sim]
                                             else:
                                                 default_mass_sceptic+=mass_default[m_index_sim]
-                                            if j==par.iNj-1:
-                                                renter_mass_J[k_index]+=mass_default[m_index_sim]
+
                     # noncoastal homeowners
 
                                 mortgage_start=ltv*h*dP_NC_lag
@@ -542,9 +512,9 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
                                 vt_buy_c, _, h_pol_C_index,ltv_pol_C_max, ltv_pol_C_index=buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_C, vt_stay_c_input,dP_C_lom,max_ltv_C[j,:,e_index],max_ltv_index_C[j,:,e_index],mass_pos_idx)
                                 vt_buy_nc, _, h_pol_NC_index,ltv_pol_NC_max,ltv_pol_NC_index =buy_sim.solve(par, grids,-1,x_sell_vec, j, dP_NC, vt_stay_nc_input,dP_NC_lom,max_ltv_NC[j,:,e_index],max_ltv_index_NC[j,:,e_index],mass_pos_idx)
                                            
-                                vt_renter_sim = renter_sim(False, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter,x_sell_vec, mass_pos_idx)
+                                vt_renter_sim = renter_sim(False, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter,x_sell_vec, mass_pos_idx)
                                 if (1+par.r_m_nc)*mortgage_start>(1-par.dDelta-par.dKappa_sell)*h*dP_NC:
-                                    vt_default = renter_sim(True, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
+                                    vt_default = renter_sim(True, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
                                 else:
                                     vt_default=np.ones(grids.vM_sim.size)*-1e12
 
@@ -556,36 +526,31 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
                                     if mass_stay[m_index_sim]>0:
                                         b_stay_nc_sim = misc.interp_2d(grids.vM, grids.vL, b_stay_nc_input[:,h_index,:], m_out[m_index_sim], ltv_stay_nc_sim[m_index_sim]) 
                                         if j<par.j_ret-1:
-                                            mDist1_nc, noncoastal_beq, savings_beq = simulate_stay(par, grids, iNj, mMarkov, mDist1_nc, mass_stay[m_index_sim], h_index,e_index, k_index, g_index, j, b_stay_nc_sim, ltv_stay_nc_sim[m_index_sim], noncoastal_beq, savings_beq)
+                                            mDist1_nc, noncoastal_beq, savings_beq = simulate_stay(par, grids, mDist1_nc, mass_stay[m_index_sim], h_index,e_index, k_index, g_index, j, b_stay_nc_sim, ltv_stay_nc_sim[m_index_sim], noncoastal_beq, savings_beq,belief_switching_frac)
                                         else:
-                                            mDist1_nc, noncoastal_beq, savings_beq = simulate_stay_ret(par, grids, iNj, mMarkov, mDist1_nc, mass_stay[m_index_sim], h_index,e_index, k_index, g_index, j, b_stay_nc_sim, ltv_stay_nc_sim[m_index_sim], noncoastal_beq, savings_beq)
-                                        if j==par.iNj-1:
-                                            noncoastal_mass_J[k_index]+=mass_stay[m_index_sim]         
+                                            mDist1_nc, noncoastal_beq, savings_beq = simulate_stay_ret(par, grids, mDist1_nc, mass_stay[m_index_sim], h_index,e_index, k_index, g_index, j, b_stay_nc_sim, ltv_stay_nc_sim[m_index_sim], noncoastal_beq, savings_beq,belief_switching_frac)
+   
                                     if mass_buyc[m_index_sim]>0:
-                                        mDist1_c, coastal_beq, savings_beq = simulate_buy_outer(par, grids, iNj, mMarkov, mDist1_c, dP_C, mass_buyc[m_index_sim],  j, k_index, g_index, h_index,e_index, h_pol_C_index[m_index_sim], max_ltv_C[j,h_pol_C_index[m_index_sim],e_index], ltv_pol_C_max[m_index_sim], ltv_pol_C_index[m_index_sim], b_stay_c_input, x_sell, coastal_beq, savings_beq)
-                                        if j==par.iNj-1:
-                                            coastal_mass_J[k_index]+=mass_buyc[m_index_sim]         
+                                        mDist1_c, coastal_beq, savings_beq = simulate_buy_outer(par, grids, mDist1_c, dP_C, mass_buyc[m_index_sim],  j, k_index, g_index, h_index,e_index, h_pol_C_index[m_index_sim], max_ltv_C[j,h_pol_C_index[m_index_sim],e_index], ltv_pol_C_max[m_index_sim], ltv_pol_C_index[m_index_sim], b_stay_c_input, x_sell, coastal_beq, savings_beq,belief_switching_frac)
+
                                     if mass_buync[m_index_sim]>0:
-                                        mDist1_nc, noncoastal_beq, savings_beq = simulate_buy_outer(par, grids, iNj, mMarkov, mDist1_nc, dP_NC, mass_buync[m_index_sim],  j, k_index, g_index, h_index,e_index, h_pol_NC_index[m_index_sim], max_ltv_NC[j,h_pol_NC_index[m_index_sim],e_index], ltv_pol_NC_max[m_index_sim], ltv_pol_NC_index[m_index_sim], b_stay_nc_input, x_sell, noncoastal_beq, savings_beq)
-                                        if j==par.iNj-1:
-                                            noncoastal_mass_J[k_index]+=mass_buync[m_index_sim]     
+                                        mDist1_nc, noncoastal_beq, savings_beq = simulate_buy_outer(par, grids, mDist1_nc, dP_NC, mass_buync[m_index_sim],  j, k_index, g_index, h_index,e_index, h_pol_NC_index[m_index_sim], max_ltv_NC[j,h_pol_NC_index[m_index_sim],e_index], ltv_pol_NC_max[m_index_sim], ltv_pol_NC_index[m_index_sim], b_stay_nc_input, x_sell, noncoastal_beq, savings_beq,belief_switching_frac)
+
                                     if mass_rent[m_index_sim]>0:
-                                        mDist1_renter, h_renter_sim, savings_beq, no_beq= simulate_rent_outer(par, grids, iNj, mMarkov, mDist1_renter, mass_rent[m_index_sim], j,  k_index, g_index, e_index, savings_beq, b_renter_input, x_sell, h_share, rental_price, no_beq)                   
+                                        mDist1_renter, h_renter_sim, savings_beq, no_beq= simulate_rent_outer(par, grids, mDist1_renter, mass_rent[m_index_sim], j,  k_index, g_index, e_index, savings_beq, b_renter_input, x_sell, h_share, rental_price, no_beq,belief_switching_frac)                   
                                         stock_demand_rental_C+=mass_rent[m_index_sim]*h_renter_sim*coastal_rent_share
                                         stock_demand_rental_NC+=mass_rent[m_index_sim]*h_renter_sim*(1-coastal_rent_share)
-                                        if j==par.iNj-1:
-                                            renter_mass_J[k_index]+=mass_rent[m_index_sim]     
+
                                     if mass_default[m_index_sim]>0:
                                         m = grids.vM_sim[m_index_sim]+e-mortgage_rebate
-                                        mDist1_renter, h_renter_sim, savings_beq, no_beq= simulate_rent_outer(par, grids, iNj, mMarkov, mDist1_renter, mass_default[m_index_sim], j,  k_index, g_index, e_index, savings_beq, b_renter_input, m, h_share, rental_price, no_beq)                   
+                                        mDist1_renter, h_renter_sim, savings_beq, no_beq= simulate_rent_outer(par, grids, mDist1_renter, mass_default[m_index_sim], j,  k_index, g_index, e_index, savings_beq, b_renter_input, m, h_share, rental_price, no_beq,belief_switching_frac)                   
                                         stock_demand_rental_C+=mass_default[m_index_sim]*h_renter_sim*coastal_rent_share
                                         stock_demand_rental_NC+=mass_default[m_index_sim]*h_renter_sim*(1-coastal_rent_share)                                        
                                         if k_index==0:
                                             default_mass_rational+=mass_default[m_index_sim]
                                         else:
                                             default_mass_sceptic+=mass_default[m_index_sim]
-                                        if j==par.iNj-1:
-                                            renter_mass_J[k_index]+=mass_default[m_index_sim]     
+
                     
                # renters      
                         e, mortgage_rebate=misc.net_income(par, grids, j, e_index, e_trans_index, 0, 0) 
@@ -597,7 +562,7 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
                         vt_buy_nc, _, h_pol_NC_index,ltv_pol_NC_max,ltv_pol_NC_index =buy_sim.solve(par, grids,-1,grids.vX_sim+e, j, dP_NC, vt_stay_nc_input,dP_NC_lom,max_ltv_NC[j,:,e_index],max_ltv_index_NC[j,:,e_index],mass_pos_idx)
                                 
                         
-                        vt_renter_sim = renter_sim(False, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vX_sim+e, mass_pos_idx)
+                        vt_renter_sim = renter_sim(False, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vX_sim+e, mass_pos_idx)
                         mass_rent,mass_buyc,mass_buync = continuous_decide_renter(grids,vt_buy_c, vt_buy_nc, vt_renter_sim,mass)        
                         assert not (np.sum(mass_rent)+np.sum(mass_buyc)+np.sum(mass_buync)-np.sum(mass))>1e-10 
                    
@@ -605,22 +570,19 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
                         for x_index_sim in mass_pos_idx:                   
                             x = grids.vX_sim[x_index_sim]+e
                             if mass_buyc[x_index_sim]>0:
-                                mDist1_c, coastal_beq, savings_beq = simulate_buy_outer(par, grids, iNj, mMarkov, mDist1_c, dP_C, mass_buyc[x_index_sim],  j, k_index, g_index, h_index,e_index, h_pol_C_index[x_index_sim], max_ltv_C[j,h_pol_C_index[x_index_sim],e_index], ltv_pol_C_max[x_index_sim], ltv_pol_C_index[x_index_sim], b_stay_c_input, x, coastal_beq, savings_beq)
-                                if j==par.iNj-1:
-                                    coastal_mass_J[k_index]+=mass_buyc[x_index_sim]     
+                                mDist1_c, coastal_beq, savings_beq = simulate_buy_outer(par, grids, mDist1_c, dP_C, mass_buyc[x_index_sim],  j, k_index, g_index, h_index,e_index, h_pol_C_index[x_index_sim], max_ltv_C[j,h_pol_C_index[x_index_sim],e_index], ltv_pol_C_max[x_index_sim], ltv_pol_C_index[x_index_sim], b_stay_c_input, x, coastal_beq, savings_beq,belief_switching_frac)
+
                             if mass_buync[x_index_sim]>0:
-                                mDist1_nc, noncoastal_beq, savings_beq = simulate_buy_outer(par, grids, iNj, mMarkov, mDist1_nc, dP_NC, mass_buync[x_index_sim],  j, k_index, g_index, h_index,e_index, h_pol_NC_index[x_index_sim], max_ltv_NC[j,h_pol_NC_index[x_index_sim],e_index], ltv_pol_NC_max[x_index_sim], ltv_pol_NC_index[x_index_sim], b_stay_nc_input, x, noncoastal_beq, savings_beq)
-                                if j==par.iNj-1:
-                                    noncoastal_mass_J[k_index]+=mass_buync[x_index_sim]     
+                                mDist1_nc, noncoastal_beq, savings_beq = simulate_buy_outer(par, grids, mDist1_nc, dP_NC, mass_buync[x_index_sim],  j, k_index, g_index, h_index,e_index, h_pol_NC_index[x_index_sim], max_ltv_NC[j,h_pol_NC_index[x_index_sim],e_index], ltv_pol_NC_max[x_index_sim], ltv_pol_NC_index[x_index_sim], b_stay_nc_input, x, noncoastal_beq, savings_beq,belief_switching_frac)
+
                             if mass_rent[x_index_sim]>0:
-                                mDist1_renter, h_renter_sim, savings_beq, no_beq= simulate_rent_outer(par, grids, iNj, mMarkov, mDist1_renter, mass_rent[x_index_sim], j,  k_index, g_index, e_index, savings_beq, b_renter_input, x, h_share, rental_price, no_beq)                   
+                                mDist1_renter, h_renter_sim, savings_beq, no_beq= simulate_rent_outer(par, grids, mDist1_renter, mass_rent[x_index_sim], j,  k_index, g_index, e_index, savings_beq, b_renter_input, x, h_share, rental_price, no_beq,belief_switching_frac)                   
                                 stock_demand_rental_C+=mass_rent[x_index_sim]*h_renter_sim*coastal_rent_share
                                 stock_demand_rental_NC+=mass_rent[x_index_sim]*h_renter_sim*(1-coastal_rent_share)
-                                if j==par.iNj-1:
-                                    renter_mass_J[k_index]+=mass_rent[x_index_sim]  
+
   
     
-    return mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, coastal_beq, noncoastal_beq, savings_beq, no_beq, coastal_mass_J, noncoastal_mass_J, renter_mass_J
+    return mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, coastal_beq, noncoastal_beq, savings_beq, no_beq
 
 
 #############################################################################
@@ -628,7 +590,7 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
 #############################################################################
 
 @njit 
-def simulate_buy_ret(par, grids, iNj, mMarkov, mDist1, d_mass_buy, h_index,e_index, k_index, g_index, j, h_pol_index, b_buy, max_ltv, ltv_pol_max, ltv_pol_index, housing_beq, savings_beq):
+def simulate_buy_ret(par, grids, mDist1, d_mass_buy, h_index,e_index, k_index, g_index, j, h_pol_index, b_buy, max_ltv, ltv_pol_max, ltv_pol_index, housing_beq, savings_beq,belief_switching_frac):
     h1 = h_pol_index
     b = b_buy
     m1 = construct_m1(grids, par, j, b)
@@ -644,19 +606,21 @@ def simulate_buy_ret(par, grids, iNj, mMarkov, mDist1, d_mass_buy, h_index,e_ind
         assert 0<=p_left_ltv<=1
     else:
         p_left_ltv = 1    
-    if max_ltv>par.max_ltv or ltv_pol_index>22:
-        #print(max_ltv)
-        #print(ltv_pol_max)
-        #print(grids.vL_sim[ltv_pol_index])
-        #print("Bad buyer")
-        assert max_ltv<=par.max_ltv and ltv_pol_index<=22   
+    assert max_ltv<=par.max_ltv 
         
-    if j < iNj-1:
-        mDist1[j+1,k_index,g_index,m1_index,h1,ltv_pol_index,e_index] += d_mass_buy * p_left* p_left_ltv      
-        mDist1[j+1,k_index,g_index,m1_index+1,h1,ltv_pol_index,e_index] += d_mass_buy *  (1-p_left)* p_left_ltv     
+    if j < par.iNj-1:
+        mDist1[j+1,k_index,g_index,m1_index,h1,ltv_pol_index,e_index] += (1-belief_switching_frac)*d_mass_buy * p_left* p_left_ltv      
+        mDist1[j+1,k_index,g_index,m1_index+1,h1,ltv_pol_index,e_index] += (1-belief_switching_frac)*d_mass_buy *  (1-p_left)* p_left_ltv          
         if ltv_pol_max:
-            mDist1[j+1,k_index,g_index,m1_index,h1,ltv_pol_index+1,e_index] +=  d_mass_buy *  p_left * (1-p_left_ltv)            
-            mDist1[j+1,k_index,g_index,m1_index+1,h1,ltv_pol_index+1,e_index] += d_mass_buy *  (1-p_left) * (1-p_left_ltv)
+            mDist1[j+1,k_index,g_index,m1_index,h1,ltv_pol_index+1,e_index] +=  (1-belief_switching_frac)*d_mass_buy *  p_left * (1-p_left_ltv)            
+            mDist1[j+1,k_index,g_index,m1_index+1,h1,ltv_pol_index+1,e_index] += (1-belief_switching_frac)*d_mass_buy *  (1-p_left) * (1-p_left_ltv)
+        if k_index==1 and belief_switching_frac>0:
+            mDist1[j+1,k_index-1,g_index,m1_index,h1,ltv_pol_index,e_index] += belief_switching_frac*d_mass_buy * p_left* p_left_ltv      
+            mDist1[j+1,k_index-1,g_index,m1_index+1,h1,ltv_pol_index,e_index] += belief_switching_frac*d_mass_buy *  (1-p_left)* p_left_ltv          
+            if ltv_pol_max:
+                mDist1[j+1,k_index-1,g_index,m1_index,h1,ltv_pol_index+1,e_index] +=  belief_switching_frac*d_mass_buy *  p_left * (1-p_left_ltv)            
+                mDist1[j+1,k_index-1,g_index,m1_index+1,h1,ltv_pol_index+1,e_index] += belief_switching_frac*d_mass_buy *  (1-p_left) * (1-p_left_ltv)
+            
     else:
         housing_beq += d_mass_buy *grids.vH[h1]
         savings_beq += d_mass_buy*b
@@ -666,7 +630,7 @@ def simulate_buy_ret(par, grids, iNj, mMarkov, mDist1, d_mass_buy, h_index,e_ind
     return mDist1, housing_beq, savings_beq
 
 @njit 
-def simulate_buy(par, grids, iNj, mMarkov, mDist1, d_mass_buy, h_index,e_index, k_index, g_index, j, h_pol_index, b_buy, max_ltv, ltv_pol_max, ltv_pol_index, housing_beq, savings_beq):
+def simulate_buy(par, grids, mDist1, d_mass_buy, h_index,e_index, k_index, g_index, j, h_pol_index, b_buy, max_ltv, ltv_pol_max, ltv_pol_index, housing_beq, savings_beq,belief_switching_frac):
     h1 = h_pol_index
     b = b_buy
     m1 = construct_m1(grids, par, j, b)
@@ -685,12 +649,18 @@ def simulate_buy(par, grids, iNj, mMarkov, mDist1, d_mass_buy, h_index,e_index, 
     
 
     for e1 in range(grids.vE.size):   
-        p_e = mMarkov[e_index,e1]
-        mDist1[j+1,k_index,g_index,m1_index,h1,ltv_pol_index,e1] += d_mass_buy * p_e * p_left* p_left_ltv      
-        mDist1[j+1,k_index,g_index,m1_index+1,h1,ltv_pol_index,e1] += d_mass_buy * p_e * (1-p_left)* p_left_ltv     
+        p_e = grids.mMarkov[e_index,e1]
+        mDist1[j+1,k_index,g_index,m1_index,h1,ltv_pol_index,e1] += (1-belief_switching_frac)*d_mass_buy * p_e * p_left* p_left_ltv      
+        mDist1[j+1,k_index,g_index,m1_index+1,h1,ltv_pol_index,e1] += (1-belief_switching_frac)*d_mass_buy * p_e * (1-p_left)* p_left_ltv     
         if ltv_pol_max:
-            mDist1[j+1,k_index,g_index,m1_index,h1,ltv_pol_index+1,e1] +=  d_mass_buy * p_e * p_left * (1-p_left_ltv)            
-            mDist1[j+1,k_index,g_index,m1_index+1,h1,ltv_pol_index+1,e1] += d_mass_buy * p_e * (1-p_left) * (1-p_left_ltv)
+            mDist1[j+1,k_index,g_index,m1_index,h1,ltv_pol_index+1,e1] +=  (1-belief_switching_frac)*d_mass_buy * p_e * p_left * (1-p_left_ltv)            
+            mDist1[j+1,k_index,g_index,m1_index+1,h1,ltv_pol_index+1,e1] += (1-belief_switching_frac)*d_mass_buy * p_e * (1-p_left) * (1-p_left_ltv)
+        if k_index==1 and belief_switching_frac>0:
+            mDist1[j+1,k_index-1,g_index,m1_index,h1,ltv_pol_index,e1] += belief_switching_frac*d_mass_buy * p_e * p_left* p_left_ltv      
+            mDist1[j+1,k_index-1,g_index,m1_index+1,h1,ltv_pol_index,e1] += belief_switching_frac*d_mass_buy * p_e * (1-p_left)* p_left_ltv     
+            if ltv_pol_max:
+                mDist1[j+1,k_index-1,g_index,m1_index,h1,ltv_pol_index+1,e1] +=  belief_switching_frac*d_mass_buy * p_e * p_left * (1-p_left_ltv)            
+                mDist1[j+1,k_index-1,g_index,m1_index+1,h1,ltv_pol_index+1,e1] += belief_switching_frac*d_mass_buy * p_e * (1-p_left) * (1-p_left_ltv)
 
         
     assert 0<=p_left<=1
@@ -698,7 +668,7 @@ def simulate_buy(par, grids, iNj, mMarkov, mDist1, d_mass_buy, h_index,e_index, 
     return mDist1, housing_beq, savings_beq
 
 @njit
-def simulate_rent(par, grids, iNj, mMarkov, mDist1_renter, d_mass_rent, e_index, k_index, g_index, j, B_pol_rent, savings_beq):
+def simulate_rent(par, grids, mDist1_renter, d_mass_rent, e_index, k_index, g_index, j, B_pol_rent, savings_beq,belief_switching_frac):
     b = B_pol_rent
     x1 = (1+par.r)*b 
     if grids.vX_sim[0] <= x1 < grids.vX_sim[-1]:
@@ -711,14 +681,19 @@ def simulate_rent(par, grids, iNj, mMarkov, mDist1_renter, d_mass_rent, e_index,
     assert 0<=p_left<=1
 
     for e1 in range(grids.vE.size):   
-        p_e = mMarkov[e_index,e1]        
-        mDist1_renter[j+1,k_index,g_index,x1_index,e1] +=  d_mass_rent * p_e * p_left         
-        mDist1_renter[j+1,k_index,g_index,x1_index+1,e1] +=  d_mass_rent * p_e * (1-p_left)     
+        p_e = grids.mMarkov[e_index,e1]        
+        mDist1_renter[j+1,k_index,g_index,x1_index,e1] +=  (1-belief_switching_frac)*d_mass_rent * p_e * p_left         
+        mDist1_renter[j+1,k_index,g_index,x1_index+1,e1] +=  (1-belief_switching_frac)*d_mass_rent * p_e * (1-p_left)     
+        if k_index==1 and belief_switching_frac>0:
+            mDist1_renter[j+1,k_index-1,g_index,x1_index,e1] +=  belief_switching_frac*d_mass_rent * p_e * p_left         
+            mDist1_renter[j+1,k_index-1,g_index,x1_index+1,e1] +=  belief_switching_frac*d_mass_rent * p_e * (1-p_left)   
+            
+        
 
     return mDist1_renter, savings_beq
 
 @njit
-def simulate_rent_ret(par, grids, iNj, mMarkov, mDist1_renter, d_mass_rent, e_index, k_index, g_index, j, B_pol_rent, savings_beq, no_beq):
+def simulate_rent_ret(par, grids, mDist1_renter, d_mass_rent, e_index, k_index, g_index, j, B_pol_rent, savings_beq, no_beq,belief_switching_frac):
     b = B_pol_rent
     x1 = (1+par.r)*b 
     if grids.vX_sim[0] <= x1 < grids.vX_sim[-1]:
@@ -729,9 +704,12 @@ def simulate_rent_ret(par, grids, iNj, mMarkov, mDist1_renter, d_mass_rent, e_in
         p_left = 0
    
     assert 0<=p_left<=1
-    if j<iNj-1:
-        mDist1_renter[j+1,k_index,g_index,x1_index,e_index] +=  d_mass_rent * p_left         
-        mDist1_renter[j+1,k_index,g_index,x1_index+1,e_index] +=  d_mass_rent * (1-p_left)     
+    if j<par.iNj-1:
+        mDist1_renter[j+1,k_index,g_index,x1_index,e_index] +=  (1-belief_switching_frac)*d_mass_rent * p_left         
+        mDist1_renter[j+1,k_index,g_index,x1_index+1,e_index] +=  (1-belief_switching_frac)*d_mass_rent * (1-p_left)  
+        if k_index==1 and belief_switching_frac>0:
+            mDist1_renter[j+1,k_index-1,g_index,x1_index,e_index] +=  belief_switching_frac*d_mass_rent * p_left         
+            mDist1_renter[j+1,k_index-1,g_index,x1_index+1,e_index] +=  belief_switching_frac*d_mass_rent * (1-p_left)  
     else:
         savings_beq += d_mass_rent*b
         if b<1e-4:
@@ -739,7 +717,7 @@ def simulate_rent_ret(par, grids, iNj, mMarkov, mDist1_renter, d_mass_rent, e_in
     return mDist1_renter, savings_beq, no_beq
     
 @njit
-def simulate_stay(par, grids, iNj, mMarkov, mDist1, d_mass_stay, h_index,e_index, k_index, g_index, j, b_stay_sim, ltv_stay_sim, housing_beq, savings_beq):
+def simulate_stay(par, grids, mDist1, d_mass_stay, h_index,e_index, k_index, g_index, j, b_stay_sim, ltv_stay_sim, housing_beq, savings_beq,belief_switching_frac):
  
     h1 = h_index
     b = b_stay_sim
@@ -747,9 +725,8 @@ def simulate_stay(par, grids, iNj, mMarkov, mDist1, d_mass_stay, h_index,e_index
     if grids.vL_sim[0] <= ltv_stay_sim < grids.vL_sim[-1]:
         l_index = misc.binary_search(0, grids.vL_sim.size, grids.vL_sim,ltv_stay_sim)
         p_left_ltv = compute_p_left(grids.vL_sim, ltv_stay_sim, l_index)
-    elif ltv_stay_sim >= grids.vL_sim[-1]: 
-        l_index = grids.vL_sim.size-2
-        p_left_ltv = 0
+    assert ltv_stay_sim <= grids.vL_sim[-1]
+    
     assert 0<=p_left_ltv<=1 
     m1 = construct_m1(grids, par, j, b)
     if grids.vM_sim[0] <= m1 < grids.vM_sim[-1]:
@@ -759,28 +736,27 @@ def simulate_stay(par, grids, iNj, mMarkov, mDist1, d_mass_stay, h_index,e_index
         m1_index = grids.vM_sim.size-2
         p_left_m = 0 
     
-    if m1<grids.vM_sim[0] or np.isnan(m1):
-        #print(m1)
-        #print(b_stay_sim)
-        #print(ltv_stay_sim)
-        #print(h_index,e_index, k_index, g_index, j)
-        assert m1>grids.vM_sim[0]
+    assert m1>=grids.vM_sim[0]
     
     assert 0<=p_left_m<=1
 
     for e1 in range(grids.vE.size):
-        p_e = mMarkov[e_index,e1]  
-        mDist1[j+1,k_index,g_index,m1_index,h1,l_index, e1] += d_mass_stay * p_e * p_left_m *p_left_ltv           
-        mDist1[j+1,k_index,g_index,m1_index+1,h1,l_index, e1] += d_mass_stay * p_e * (1-p_left_m) *p_left_ltv       
-        mDist1[j+1,k_index,g_index,m1_index,h1,l_index+1, e1] += d_mass_stay * p_e * p_left_m *(1-p_left_ltv)           
-        mDist1[j+1,k_index,g_index,m1_index+1,h1,l_index+1, e1] += d_mass_stay * p_e * (1-p_left_m) *(1-p_left_ltv)
-   
+        p_e = grids.mMarkov[e_index,e1]  
+        mDist1[j+1,k_index,g_index,m1_index,h1,l_index, e1] += (1-belief_switching_frac)*d_mass_stay * p_e * p_left_m *p_left_ltv           
+        mDist1[j+1,k_index,g_index,m1_index+1,h1,l_index, e1] += (1-belief_switching_frac)*d_mass_stay * p_e * (1-p_left_m) *p_left_ltv       
+        mDist1[j+1,k_index,g_index,m1_index,h1,l_index+1, e1] += (1-belief_switching_frac)*d_mass_stay * p_e * p_left_m *(1-p_left_ltv)           
+        mDist1[j+1,k_index,g_index,m1_index+1,h1,l_index+1, e1] += (1-belief_switching_frac)*d_mass_stay * p_e * (1-p_left_m) *(1-p_left_ltv)
+        if k_index==1 and belief_switching_frac>0:
+            mDist1[j+1,k_index-1,g_index,m1_index,h1,l_index, e1] += belief_switching_frac*d_mass_stay * p_e * p_left_m *p_left_ltv           
+            mDist1[j+1,k_index-1,g_index,m1_index+1,h1,l_index, e1] += belief_switching_frac*d_mass_stay * p_e * (1-p_left_m) *p_left_ltv       
+            mDist1[j+1,k_index-1,g_index,m1_index,h1,l_index+1, e1] += belief_switching_frac*d_mass_stay * p_e * p_left_m *(1-p_left_ltv)           
+            mDist1[j+1,k_index-1,g_index,m1_index+1,h1,l_index+1, e1] += belief_switching_frac*d_mass_stay * p_e * (1-p_left_m) *(1-p_left_ltv)
     
         
     return mDist1, housing_beq, savings_beq
 
 @njit
-def simulate_stay_ret(par, grids, iNj, mMarkov, mDist1, d_mass_stay, h_index,e_index, k_index, g_index, j, b_stay_sim, ltv_stay_sim, housing_beq, savings_beq):
+def simulate_stay_ret(par, grids, mDist1, d_mass_stay, h_index,e_index, k_index, g_index, j, b_stay_sim, ltv_stay_sim, housing_beq, savings_beq,belief_switching_frac):
  
     h1 = h_index
     b = b_stay_sim
@@ -800,11 +776,16 @@ def simulate_stay_ret(par, grids, iNj, mMarkov, mDist1, d_mass_stay, h_index,e_i
         m1_index = grids.vM_sim.size-2
         p_left_m = 0 
     assert 0<=p_left_m<=1
-    if j<iNj-1:
-        mDist1[j+1,k_index,g_index,m1_index,h1,l_index, e_index] += d_mass_stay * p_left_m *p_left_ltv           
-        mDist1[j+1,k_index,g_index,m1_index+1,h1,l_index, e_index] += d_mass_stay *  (1-p_left_m) *p_left_ltv       
-        mDist1[j+1,k_index,g_index,m1_index,h1,l_index+1, e_index] += d_mass_stay *  p_left_m *(1-p_left_ltv)           
-        mDist1[j+1,k_index,g_index,m1_index+1,h1,l_index+1, e_index] += d_mass_stay * (1-p_left_m) *(1-p_left_ltv)   
+    if j<par.iNj-1:
+        mDist1[j+1,k_index,g_index,m1_index,h1,l_index, e_index] += (1-belief_switching_frac)*d_mass_stay * p_left_m *p_left_ltv           
+        mDist1[j+1,k_index,g_index,m1_index+1,h1,l_index, e_index] += (1-belief_switching_frac)*d_mass_stay *  (1-p_left_m) *p_left_ltv       
+        mDist1[j+1,k_index,g_index,m1_index,h1,l_index+1, e_index] += (1-belief_switching_frac)*d_mass_stay *  p_left_m *(1-p_left_ltv)           
+        mDist1[j+1,k_index,g_index,m1_index+1,h1,l_index+1, e_index] += (1-belief_switching_frac)*d_mass_stay * (1-p_left_m) *(1-p_left_ltv) 
+        if k_index==1 and belief_switching_frac>0:
+            mDist1[j+1,k_index-1,g_index,m1_index,h1,l_index, e_index] += belief_switching_frac*d_mass_stay * p_left_m *p_left_ltv           
+            mDist1[j+1,k_index-1,g_index,m1_index+1,h1,l_index, e_index] += belief_switching_frac*d_mass_stay *  (1-p_left_m) *p_left_ltv       
+            mDist1[j+1,k_index-1,g_index,m1_index,h1,l_index+1, e_index] += belief_switching_frac*d_mass_stay *  p_left_m *(1-p_left_ltv)           
+            mDist1[j+1,k_index-1,g_index,m1_index+1,h1,l_index+1, e_index] += belief_switching_frac*d_mass_stay * (1-p_left_m) *(1-p_left_ltv) 
     else:
         housing_beq += d_mass_stay *grids.vH[h1]
         savings_beq += d_mass_stay*b
@@ -814,18 +795,18 @@ def simulate_stay_ret(par, grids, iNj, mMarkov, mDist1, d_mass_stay, h_index,e_i
 
 
 @njit
-def simulate_rent_outer(par, grids, iNj, mMarkov, mDist1_renter, d_mass_rent, j,  k_index, g_index, e_index, savings_beq, b_renter_input, x_renter, h_share, rental_price, no_beq):
+def simulate_rent_outer(par, grids, mDist1_renter, d_mass_rent, j,  k_index, g_index, e_index, savings_beq, b_renter_input, x_renter, h_share, rental_price, no_beq,belief_switching_frac):
     B_pol=interp.interp_1d(grids.vX,b_renter_input, x_renter)
     expenditures=x_renter-B_pol
     h_renter_sim=max(min((h_share/rental_price)*expenditures,grids.vH_renter[-1]),grids.vH_renter[0])
     if j<par.j_ret-1:
-        mDist1_renter, savings_beq = simulate_rent(par, grids, iNj, mMarkov, mDist1_renter, d_mass_rent, e_index, k_index, g_index, j, B_pol, savings_beq)
+        mDist1_renter, savings_beq = simulate_rent(par, grids, mDist1_renter, d_mass_rent, e_index, k_index, g_index, j, B_pol, savings_beq,belief_switching_frac)
     else:
-        mDist1_renter, savings_beq, no_beq = simulate_rent_ret(par, grids, iNj, mMarkov, mDist1_renter, d_mass_rent, e_index, k_index, g_index, j, B_pol, savings_beq, no_beq)
+        mDist1_renter, savings_beq, no_beq = simulate_rent_ret(par, grids, mDist1_renter, d_mass_rent, e_index, k_index, g_index, j, B_pol, savings_beq, no_beq,belief_switching_frac)
     return mDist1_renter, h_renter_sim, savings_beq, no_beq  
 
 @njit 
-def simulate_buy_outer(par, grids, iNj, mMarkov, mDist1, dP, d_mass_buy,  j, k_index, g_index, h_index,e_index, h_pol_index, max_ltv, ltv_pol_max, ltv_pol_index, b_stay_input, x_buy, housing_beq, savings_beq):
+def simulate_buy_outer(par, grids, mDist1, dP, d_mass_buy,  j, k_index, g_index, h_index,e_index, h_pol_index, max_ltv, ltv_pol_max, ltv_pol_index, b_stay_input, x_buy, housing_beq, savings_beq,belief_switching_frac):
     if ltv_pol_max:
         ltv_buy=max_ltv
     else:
@@ -837,9 +818,9 @@ def simulate_buy_outer(par, grids, iNj, mMarkov, mDist1, dP, d_mass_buy,  j, k_i
     m_buy = x_buy - (dP*(1+par.dKappa_buy-ltv_buy*(1-par.dZeta)))*grids.vH[h_pol_index]-origination_cost
     b_buy = misc.interp_2d(grids.vM, grids.vL, b_stay_input[:,h_pol_index,:], m_buy, ltv_buy)  
     if j<par.j_ret-1:
-       mDist1, housing_beq, savings_beq = simulate_buy(par, grids, iNj, mMarkov, mDist1, d_mass_buy, h_index,e_index, k_index, g_index, j, h_pol_index, b_buy, max_ltv, ltv_pol_max, ltv_pol_index, housing_beq, savings_beq)
+       mDist1, housing_beq, savings_beq = simulate_buy(par, grids, mDist1, d_mass_buy, h_index,e_index, k_index, g_index, j, h_pol_index, b_buy, max_ltv, ltv_pol_max, ltv_pol_index, housing_beq, savings_beq,belief_switching_frac)
     else:
-       mDist1, housing_beq, savings_beq = simulate_buy_ret(par, grids, iNj, mMarkov, mDist1, d_mass_buy, h_index,e_index, k_index, g_index, j, h_pol_index, b_buy, max_ltv, ltv_pol_max, ltv_pol_index, housing_beq, savings_beq)
+       mDist1, housing_beq, savings_beq = simulate_buy_ret(par, grids, mDist1, d_mass_buy, h_index,e_index, k_index, g_index, j, h_pol_index, b_buy, max_ltv, ltv_pol_max, ltv_pol_index, housing_beq, savings_beq,belief_switching_frac)
     return mDist1, housing_beq, savings_beq
         
 #############################################################################
@@ -1156,7 +1137,7 @@ def mortgage_matrix_solve(par, grids, dP_C_lag, dP_NC_lag, dP_C, dP_NC, mortgage
     return minpay_matrix_C, ltv_minpay_index_left_C, minpay_matrix_NC, ltv_minpay_index_left_NC, max_ltv_C,max_ltv_NC, max_ltv_index_C, max_ltv_index_NC
 
 @njit
-def renter_sim(default, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, x_renter_vec, idx_list):    
+def renter_sim(default, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, x_renter_vec, idx_list):    
     vt_renter_out=np.ones((grids.vM_sim.size))*-1e12
     for idx in idx_list:
         x_renter=x_renter_vec[idx]
@@ -1166,34 +1147,14 @@ def renter_sim(default, initialise, par,grids,j,vt_renter_input, b_renter_input,
             else:
                 utility_penalty=0
             vt_renter_lom=-1/(-1/interp.interp_1d(grids.vX,vt_renter_input, x_renter) -utility_penalty)
-            #if initialise:
             vt_renter_out[idx]=vt_renter_lom
-            #else:
-                #B_pol=interp.interp_1d(grids.vX,b_renter_input, x_renter)
-                #expenditures=x_renter-B_pol
-                
-                #Enforce that maximum house size is the largest element of the H-set
-                #if grids.vH_renter[0]<=h_share_lom/rental_price_lom*expenditures<=grids.vH_renter[-1]:
-                #    flow_utility_lom=(par.vAgeEquiv[j]*w_lom*expenditures**(1-par.dSigma))/(1-par.dSigma)
-                #elif grids.vH_renter[0]>h_share_lom/rental_price_lom*expenditures:
-                #    flow_utility_lom=ut.u(j,expenditures-rental_price_lom*grids.vH_renter[0],grids.vH_renter[0],g_renter_lom, par)                
-                #else:
-                #    flow_utility_lom=ut.u(j,expenditures-rental_price_lom*grids.vH_renter[-1],grids.vH_renter[-1],g_renter_lom, par)
-                #if grids.vH_renter[0]<=h_share/rental_price*expenditures<=grids.vH_renter[-1]:
-                #    flow_utility_mc=(par.vAgeEquiv[j]*w*expenditures**(1-par.dSigma))/(1-par.dSigma)
-                #elif grids.vH_renter[0]>h_share/rental_price*expenditures:
-                #    flow_utility_mc=ut.u(j,expenditures-rental_price*grids.vH_renter[0],grids.vH_renter[0],g_renter, par)  
-                #else:
-                #    flow_utility_mc=ut.u(j,expenditures-rental_price*grids.vH_renter[-1],grids.vH_renter[-1],g_renter, par)  
-                #vt_renter_out[idx]=-1/(-1/vt_renter_lom+flow_utility_mc-flow_utility_lom) 
-
         else:
             vt_renter_out[idx]=-1e12
 
     return vt_renter_out
 
 @njit
-def renter_sim_demand(default, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, x_renter_vec, idx_list):    
+def renter_sim_demand(default, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, x_renter_vec, idx_list):    
     vt_renter_out=np.ones((grids.vM_sim.size))*-1e12
     h_renter_out=np.empty((grids.vM_sim.size))
     for idx in idx_list:
@@ -1206,37 +1167,16 @@ def renter_sim_demand(default, initialise, par,grids,j,vt_renter_input, b_renter
             vt_renter_lom=-1/(-1/interp.interp_1d(grids.vX,vt_renter_input, x_renter) -utility_penalty)
             B_pol=interp.interp_1d(grids.vX,b_renter_input, x_renter)
             expenditures=x_renter-B_pol
-            h_renter_out[idx]=max(min(h_share/rental_price*expenditures,grids.vH_renter[-1]),grids.vH_renter[0])
-            #if initialise:
-            vt_renter_out[idx]=vt_renter_lom
-            #else:
-                #Enforce that maximum house size is the largest element of the H-set
-                #if grids.vH_renter[0]<=h_share_lom/rental_price_lom*expenditures<=grids.vH_renter[-1]:
-                #    flow_utility_lom=(par.vAgeEquiv[j]*w_lom*expenditures**(1-par.dSigma))/(1-par.dSigma)
-                #elif grids.vH_renter[0]>h_share_lom/rental_price_lom*expenditures:
-                #    flow_utility_lom=ut.u(j,expenditures-rental_price_lom*grids.vH_renter[0],grids.vH_renter[0],g_renter_lom, par)                
-                #else:
-                #    flow_utility_lom=ut.u(j,expenditures-rental_price_lom*grids.vH_renter[-1],grids.vH_renter[-1],g_renter_lom, par)
-                #if grids.vH_renter[0]<=h_share/rental_price*expenditures<=grids.vH_renter[-1]:
-                #    flow_utility_mc=(par.vAgeEquiv[j]*w*expenditures**(1-par.dSigma))/(1-par.dSigma)
-                #elif grids.vH_renter[0]>h_share/rental_price*expenditures:
-                #    flow_utility_mc=ut.u(j,expenditures-rental_price*grids.vH_renter[0],grids.vH_renter[0],g_renter, par)  
-                #else:
-                #    flow_utility_mc=ut.u(j,expenditures-rental_price*grids.vH_renter[-1],grids.vH_renter[-1],g_renter, par)  
-                #vt_renter_out[idx]=-1/(-1/vt_renter_lom+flow_utility_mc-flow_utility_lom)                 
+            h_renter_out[idx]=max(min(h_share/rental_price*expenditures,grids.vH_renter[-1]),grids.vH_renter[0])            
+            vt_renter_out[idx]=vt_renter_lom 
+            assert h_renter_out[idx]>0 and not np.isnan(vt_renter_out[idx])
         else:
             vt_renter_out[idx]=-1e12
-            h_renter_out[idx]=0.
-            
-        if h_renter_out[idx]<0 or np.isnan(vt_renter_out[idx]):
-            #print(idx)
-            #print(x_renter, B_pol, expenditures)
-            #print(h_renter_out[idx], vt_renter_out[idx])
-            #print(rental_price, rental_price_lom)
-            #print(h_share, h_share_lom, w,w_lom, g_renter_lom, g_renter)
-            #print(vt_renter_lom)
-            #print(expenditures-rental_price_lom*grids.vH_renter[0],expenditures-rental_price*grids.vH_renter[0])
-            assert h_renter_out[idx]>0 and not np.isnan(vt_renter_out[idx])
+            h_renter_out[idx]=0.          
+        
+        
+        
+        
     return vt_renter_out, h_renter_out
 
 @njit
@@ -1288,10 +1228,31 @@ def renter_solve(par, grids, g_index, rental_price_lom_C, rental_price_lom_NC, r
         g_renter=weight_C*g+(1-weight_C)
         coastal_rent_share=weight_C
     
-    if h_share<=0 or coastal_rent_share<0:
-        #print(rental_price, rental_price_C, rental_price_NC)
-        #print(g_indiff, left_bound, right_bound) 
-        #print(h_share, coastal_rent_share)
-        assert h_share>0 and coastal_rent_share>0
+
+    assert h_share>0 and coastal_rent_share>=0 and coastal_rent_share<=1
     
     return h_share_lom, w_lom, h_share, w, rental_price_lom, rental_price, coastal_rent_share, g_renter_lom, g_renter
+
+@njit
+def gen_initial_dist(par, grids, t_index, dP_C, dP_NC, coastal_beq, noncoastal_beq, savings_beq, sceptics):
+    
+    if sceptics:
+        k_dim=2 
+    else:
+        k_dim=1  
+    mDist_age_0_renter=np.zeros((k_dim,grids.vG.size, grids.vX_sim.size, grids.vE.size))
+    coastal_damage_frac=grids.vPi_S_median[t_index]*np.dot(grids.vPDF_z[1:],(1-grids.vZ[1:]))
+    housing_bequest=coastal_beq*(1-coastal_damage_frac-par.dDelta)*dP_C + noncoastal_beq*(1-par.dDelta)*dP_NC
+    total_bequest = (housing_bequest+savings_beq*(1+par.r))*par.iNj
+    mPi_joint=initial_joint_sim.initial_joint(par, grids, total_bequest)
+    for k_index in range(k_dim):
+        if sceptics==True:
+            k_weight=grids.mTypes[t_index,k_index]
+        else:
+            k_weight=1.
+        for g_index in range(grids.vG.size):
+            mDist_age_0_renter[k_index,g_index,:,:]= (1/par.iNj)*k_weight*(1/grids.vG.size)*mPi_joint
+    
+
+    
+    return mDist_age_0_renter 

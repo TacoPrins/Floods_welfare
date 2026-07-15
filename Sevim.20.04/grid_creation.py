@@ -1,10 +1,11 @@
 import misc_functions as misc    
 import tauchen as tauch
+import pandas as pd
 import numpy as np
 import grids as grid
 from scipy.optimize import brentq
 
-def create(par, experiment=False, mortgage_premium = False):
+def create(par, start_2026=False, mortgage_premium = False):
        
     # create grids
     mMarkov, vE = tauch.tauchen(par.dRho, par.dSigmaeps, par.iNumStates, par.iM, par.time_increment)
@@ -43,15 +44,13 @@ def create(par, experiment=False, mortgage_premium = False):
     
 
     
-    if experiment:
-        vPi_S_median=par.vPi_S_median[int((2026-1998)/par.time_increment):]
-    else:
-        vPi_S_median=par.vPi_S_median    
+
+  
     vZ= np.array([1, 0.9, 0.7, 0.3])
     vPDF_z= np.array([1, 0.4, 0.4, 0.2])
     
     #WARNING - RETHINK FOR INCREASING CURVE
-    vPi_L=np.ones(len(vPi_S_median))*par.vPi_S_median[0]
+    vPi_L=np.ones(len(par.vPi_S_median))*par.vPi_S_median[0]
 
     vL_sim=np.linspace(0, 1.5, 35)
     #vH=  np.array([1.50, 1.92, 2.46, 3.15, 4.03, 5.15])
@@ -124,7 +123,10 @@ def create(par, experiment=False, mortgage_premium = False):
     vX_sim=grid.nonlinspace_jit(0, par.iBmax, par.iNb*2, 1)
     vM_sim=vX_sim #vX_sim and vM_sim are clunkily named savings grids for simulation with twice the grid points
     
-    
+    mTypes = np.ones((len(par.vPi_S_median), 2))
+    concern_vec = pd.read_excel("concern_forecast.xlsx", usecols=[1], header=None).to_numpy().ravel()
+    mTypes[0:len(concern_vec)-1,0]=concern_vec[0:-1] #Explanatory note: we force jump to no sceptics in 2100; hence 2100 entry of concern_vec overwritten with 1
+    mTypes[:,1]= 1-mTypes[:,0]  
     grids_dict = {'vB': vB,
                   "vH":  vH,
                   "vH_renter":  vH_renter,
@@ -140,29 +142,28 @@ def create(par, experiment=False, mortgage_premium = False):
                   'vE_trans': vE_trans, 
                   'median_inc': median_inc,
                   'median_inc_pretax': median_inc_pretax,
-                  'vTime': np.arange(0,len(vPi_S_median)),
+                  'vTime': np.arange(0,len(par.vPi_S_median)),
                   'vZ': vZ,   
                   'vPDF_z':vPDF_z,
                   'vChi': vChi,
                   'min_inc': min_inc,
+                  'mMarkov': mMarkov,
                   #'mIncome': np.exp(vChi[:, np.newaxis, np.newaxis] + vE[np.newaxis, :, np.newaxis] + vE_trans[np.newaxis, np.newaxis, :]) /median_inc,
                   #'mIncome_pers': mIncome_pers,
                   #'vIncome_ret': mIncome_pers[par.j_ret-1,:]*0.7,
                   'median_inc': median_inc,
                   'mMarkov_trans': mMarkov_trans[0,:],
-                  'vEpsilon': np.array([0,1]),
-                  'vLkeps':np.linspace(0,5,2),
                   'mPTI_C': mPTI_C,
                   'mPTI_NC': mPTI_NC,
-                  'vPi_S_median': vPi_S_median,
-                  'vTypes': np.array([0.58, 0.42]),
+                  'vPi_S_median': par.vPi_S_median,
+                  'mTypes': mTypes,
                   'max_ltv': par.max_ltv, 
                   'vPi_E': vPi_E,
                   'vPi_L': vPi_L}
 
     grids = misc.construct_jitclass(grids_dict)
     
-    return grids, mMarkov
+    return grids
 
 def net_payment_frac(mortgage_size, par, j, e_index, vChi, vE, mortgage_rate):
     if j<par.j_ret:

@@ -5,7 +5,6 @@ import par_epsilons as parfile
 import misc_functions as misc
 import matplotlib.pyplot as plt
 import grid_creation as grid_creation
-import experiments as experiments
 import equilibrium as equil
 import household_problem_epsilons_nolearning as household_problem  
 import simulation as sim
@@ -22,39 +21,32 @@ def plot_price_transition_exp(
     title,
     switch_index=14,
 ):
-    """
-    Plot the price paths for C and NC.
-
-    C has one color throughout.
-    NC has one color throughout.
-    """
-
     T = len(grids.vTime)
     t_indices = np.arange(T)
-    years = t_indices * 2 + 1998
+    years = par.starting_year + par.time_increment * t_indices
 
     P_C_base = np.array([
-        lom.LoM_C(grids, t_index, vCoeff_C_baseline)
+        lom.LoM(par, grids, t_index, vCoeff_C_baseline)
         for t_index in t_indices
     ])
 
     P_NC_base = np.array([
-        lom.LoM_NC(grids, t_index, vCoeff_NC_baseline)
+        lom.LoM(par, grids, t_index, vCoeff_NC_baseline)
         for t_index in t_indices
     ])
 
     P_C_exp = np.array([
-        lom.LoM_C(grids, t_index, vCoeff_C_experiment)
+        lom.LoM(par, grids, t_index, vCoeff_C_experiment)
         for t_index in t_indices
     ])
 
     P_NC_exp = np.array([
-        lom.LoM_NC(grids, t_index, vCoeff_NC_experiment)
+        lom.LoM(par, grids, t_index, vCoeff_NC_experiment)
         for t_index in t_indices
     ])
 
-    P_C_initial = lom.LoM_C(grids, 0, vCoeff_C_initial)
-    P_NC_initial = lom.LoM_NC(grids, 0, vCoeff_NC_initial)
+    P_C_initial = lom.LoM(par, grids, 0, vCoeff_C_initial)
+    P_NC_initial = lom.LoM(par, grids, 0, vCoeff_NC_initial)
 
     year0 = years[0]
     switch_year = years[switch_index]
@@ -65,101 +57,55 @@ def plot_price_transition_exp(
     color_C = "tab:blue"
     color_NC = "tab:orange"
 
-    # --------------------
     # Flood-exposed C
-    # --------------------
     ax.scatter(year0, P_C_initial, marker="o", color=color_C)
     ax.scatter(year0, P_C_base[0], marker="o", color=color_C)
+    ax.plot([year0, year0], [P_C_initial, P_C_base[0]],
+            linestyle="--", color=color_C)
 
-    ax.plot(
-        [year0, year0],
-        [P_C_initial, P_C_base[0]],
-        linestyle="--",
-        color=color_C
-    )
+    ax.plot(years[:switch_index + 1],
+            P_C_base[:switch_index + 1],
+            color=color_C,
+            label="Flood-exposed")
 
-    ax.plot(
-        years[:switch_index + 1],
-        P_C_base[:switch_index + 1],
-        color=color_C,
-        label="Flood-exposed"
-    )
+    ax.scatter(switch_year, P_C_base[switch_index],
+               marker="o", color=color_C)
+    ax.scatter(switch_year, P_C_exp[switch_index],
+               marker="o", color=color_C)
 
-    ax.scatter(
-        switch_year,
-        P_C_base[switch_index],
-        marker="o",
-        color=color_C
-    )
+    ax.plot([switch_year, switch_year],
+            [P_C_base[switch_index], P_C_exp[switch_index]],
+            linestyle="--", color=color_C)
 
-    ax.scatter(
-        switch_year,
-        P_C_exp[switch_index],
-        marker="o",
-        color=color_C
-    )
-
-    ax.plot(
-        [switch_year, switch_year],
-        [P_C_base[switch_index], P_C_exp[switch_index]],
-        linestyle="--",
-        color=color_C
-    )
-
-    ax.plot(
-        years[switch_index:],
-        P_C_exp[switch_index:],
-        color=color_C
-    )
+    ax.plot(years[switch_index:],
+            P_C_exp[switch_index:],
+            color=color_C)
 
     ax.scatter(final_year, P_C_exp[-1], marker="o", color=color_C)
 
-    # --------------------
     # Non-flood-exposed NC
-    # --------------------
     ax.scatter(year0, P_NC_initial, marker="s", color=color_NC)
     ax.scatter(year0, P_NC_base[0], marker="s", color=color_NC)
+    ax.plot([year0, year0], [P_NC_initial, P_NC_base[0]],
+            linestyle="--", color=color_NC)
 
-    ax.plot(
-        [year0, year0],
-        [P_NC_initial, P_NC_base[0]],
-        linestyle="--",
-        color=color_NC
-    )
+    ax.plot(years[:switch_index + 1],
+            P_NC_base[:switch_index + 1],
+            color=color_NC,
+            label="Non-flood-exposed")
 
-    ax.plot(
-        years[:switch_index + 1],
-        P_NC_base[:switch_index + 1],
-        color=color_NC,
-        label="Non-flood-exposed"
-    )
+    ax.scatter(switch_year, P_NC_base[switch_index],
+               marker="s", color=color_NC)
+    ax.scatter(switch_year, P_NC_exp[switch_index],
+               marker="s", color=color_NC)
 
-    ax.scatter(
-        switch_year,
-        P_NC_base[switch_index],
-        marker="s",
-        color=color_NC
-    )
+    ax.plot([switch_year, switch_year],
+            [P_NC_base[switch_index], P_NC_exp[switch_index]],
+            linestyle="--", color=color_NC)
 
-    ax.scatter(
-        switch_year,
-        P_NC_exp[switch_index],
-        marker="s",
-        color=color_NC
-    )
-
-    ax.plot(
-        [switch_year, switch_year],
-        [P_NC_base[switch_index], P_NC_exp[switch_index]],
-        linestyle="--",
-        color=color_NC
-    )
-
-    ax.plot(
-        years[switch_index:],
-        P_NC_exp[switch_index:],
-        color=color_NC
-    )
+    ax.plot(years[switch_index:],
+            P_NC_exp[switch_index:],
+            color=color_NC)
 
     ax.scatter(final_year, P_NC_exp[-1], marker="s", color=color_NC)
 
@@ -169,116 +115,161 @@ def plot_price_transition_exp(
     ax.set_ylabel("Price")
     ax.set_title(title)
     ax.legend()
-    ax.set_ylim(0.55, 0.85)
+    ax.set_ylim(0.4, 0.85)
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
     plt.show()
-
-def plot_pricepaths(par, grids, mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C, vCoeff_NC, vCoeff_C_RE, vCoeff_NC_RE, vCoeff_C_terminal_RE, vCoeff_NC_terminal_RE, vCoeff_C_terminal_HE, vCoeff_NC_terminal_HE):
-    # import parameters
-    normalisation=vCoeff_NC_initial[0]
-
-    plt.style.use('seaborn-v0_8-whitegrid')
     
+def plot_pricepaths(
+    par,
+    grids,
+    vCoeff_C_initial,
+    vCoeff_NC_initial,
+    vCoeff_C,
+    vCoeff_NC,
+    vCoeff_C_RE,
+    vCoeff_NC_RE,
+    vCoeff_C_terminal_RE,
+    vCoeff_NC_terminal_RE,
+    vCoeff_C_terminal_HE,
+    vCoeff_NC_terminal_HE,
+):
+    normalisation = vCoeff_NC_initial[0]
+
+    plt.style.use("seaborn-v0_8-whitegrid")
     plt.figure(figsize=(9, 5))
-    
-    # Compute trajectories
-    yC_RE = lom.LoM_C(grids, grids.vTime, vCoeff_C_RE)/normalisation
-    yNC_RE = lom.LoM_NC(grids, grids.vTime, vCoeff_NC_RE)/normalisation
-    
-    yC_HE = lom.LoM_C(grids, grids.vTime, vCoeff_C)/normalisation
-    yNC_HE = lom.LoM_NC(grids, grids.vTime, vCoeff_NC)/normalisation
-    
-    # Rescale time: t=0 -> 1998, step=2 years
-    years = 1998 + 2 * grids.vTime
-    
-    # Plot
-    lineC, = plt.plot(years, yC_RE, linestyle=':', linewidth=2)
-    lineNC, = plt.plot(years, yNC_RE, linestyle=':', linewidth=2)
-    
-    
-    plt.plot(years, yC_HE,
-      
-         linewidth=2,
-         color=lineC.get_color(),
-         label='Flood-exposed price trajectory')
 
-    plt.plot(years, yNC_HE,
-   
-         linewidth=2,
-         color=lineNC.get_color(),
-         label='Inland price trajectory')
-    
-    # Initial points
-    x0_year = 1998
-    y_coastal = vCoeff_C_initial[0]/normalisation
-    y_inland = vCoeff_NC_initial[0]/normalisation
-    
+    T = len(grids.vTime)
+    t_indices = np.arange(T)
+    years = par.starting_year + par.time_increment * t_indices
+
+    yC_RE = np.array([
+        lom.LoM(par, grids, t_index, vCoeff_C_RE)
+        for t_index in t_indices
+    ]) / normalisation
+
+    yNC_RE = np.array([
+        lom.LoM(par, grids, t_index, vCoeff_NC_RE)
+        for t_index in t_indices
+    ]) / normalisation
+
+    yC_HE = np.array([
+        lom.LoM(par, grids, t_index, vCoeff_C)
+        for t_index in t_indices
+    ]) / normalisation
+
+    yNC_HE = np.array([
+        lom.LoM(par, grids, t_index, vCoeff_NC)
+        for t_index in t_indices
+    ]) / normalisation
+
+    lineC, = plt.plot(years, yC_RE, linestyle=":", linewidth=2)
+    lineNC, = plt.plot(years, yNC_RE, linestyle=":", linewidth=2)
+
+    plt.plot(
+        years,
+        yC_HE,
+        linewidth=2,
+        color=lineC.get_color(),
+        label="Flood-exposed price trajectory",
+    )
+
+    plt.plot(
+        years,
+        yNC_HE,
+        linewidth=2,
+        color=lineNC.get_color(),
+        label="Inland price trajectory",
+    )
+
+    # Initial prices
+    x0_year = years[0]
+    y_coastal = lom.LoM(par, grids, 0, vCoeff_C_initial) / normalisation
+    y_inland = lom.LoM(par, grids, 0, vCoeff_NC_initial) / normalisation
+
     plt.scatter([x0_year], [y_coastal], zorder=5)
     plt.scatter([x0_year], [y_inland], zorder=5)
 
-    
-    # Annotations above dots
-    plt.annotate("Initial flood-exposed price",
-                 (x0_year, y_coastal),
-                 xytext=(10, 10),
-                 textcoords="offset points",
-                 ha='center', fontsize=9)
-    
-    plt.annotate("Initial inland price",
-                 (x0_year, y_inland),
-                 xytext=(10, 10),
-                 textcoords="offset points",
-                 ha='center', fontsize=9)
-    
+    plt.annotate(
+        "Initial flood-exposed price",
+        (x0_year, y_coastal),
+        xytext=(10, 10),
+        textcoords="offset points",
+        ha="center",
+        fontsize=9,
+    )
+
+    plt.annotate(
+        "Initial inland price",
+        (x0_year, y_inland),
+        xytext=(10, 10),
+        textcoords="offset points",
+        ha="center",
+        fontsize=9,
+    )
+
+    # Terminal prices
     xT_year = years[-1]
 
-    # Terminal prices (given)
-    yC_terminal_HE = vCoeff_C_terminal_HE[0]/normalisation
-    yNC_terminal_HE = vCoeff_NC_terminal_HE[0]/normalisation
-    
-    # Scatter terminal points
-    plt.scatter([xT_year], [yC_terminal_HE], 
-                color=lineC.get_color(), zorder=5)
-    
-    plt.scatter([xT_year], [yNC_terminal_HE], 
-                color=lineNC.get_color(), zorder=5)
-    
-        
-    # Annotations
-    plt.annotate("Terminal flood-exposed price",
-                 (xT_year, yC_terminal_HE),
-                 xytext=(-10, 10),
-                 textcoords="offset points",
-                 ha='right', fontsize=9)
-    
-    plt.annotate("Terminal inland price",
-                 (xT_year, yNC_terminal_HE),
-                 xytext=(-10, 10),
-                 textcoords="offset points",
-                 ha='right', fontsize=9)
-    
-    # Dotted guide lines
-    plt.vlines(x0_year, y_coastal, yC_HE[0], linestyles='dotted', linewidth=1)
-    plt.vlines(x0_year, y_inland, yNC_HE[0], linestyles='dotted', linewidth=1)
-    
-    # Axis ticks: start at 2000, every 4 years for readability
-    start_year = 2000
-    end_year = int(years[-1])
-    xticks = np.arange(start_year, end_year + 1, 20)
+    yC_terminal_HE = (
+        lom.LoM(par, grids, T - 1, vCoeff_C_terminal_HE)
+        / normalisation
+    )
+
+    yNC_terminal_HE = (
+        lom.LoM(par, grids, T - 1, vCoeff_NC_terminal_HE)
+        / normalisation
+    )
+
+    plt.scatter(
+        [xT_year],
+        [yC_terminal_HE],
+        color=lineC.get_color(),
+        zorder=5,
+    )
+
+    plt.scatter(
+        [xT_year],
+        [yNC_terminal_HE],
+        color=lineNC.get_color(),
+        zorder=5,
+    )
+
+    plt.annotate(
+        "Terminal flood-exposed price",
+        (xT_year, yC_terminal_HE),
+        xytext=(-10, 10),
+        textcoords="offset points",
+        ha="right",
+        fontsize=9,
+    )
+
+    plt.annotate(
+        "Terminal inland price",
+        (xT_year, yNC_terminal_HE),
+        xytext=(-10, 10),
+        textcoords="offset points",
+        ha="right",
+        fontsize=9,
+    )
+
+    plt.vlines(x0_year, y_coastal, yC_HE[0],
+               linestyles="dotted", linewidth=1)
+    plt.vlines(x0_year, y_inland, yNC_HE[0],
+               linestyles="dotted", linewidth=1)
+
+    xticks = np.arange(int(years[0]), int(years[-1]) + 1, 20)
     plt.xticks(xticks)
-    
-    # Labels & title
+
     plt.xlabel("Year")
     plt.ylabel("Price")
     plt.title("House price trajectories")
-    
     plt.legend(frameon=False)
-    plt.grid(True, linestyle='--', alpha=0.4)
-    
+    plt.grid(True, linestyle="--", alpha=0.4)
+
     plt.tight_layout()
-    plt.show()  
+    plt.show()
     
 def plot_distribution_2026(grids, par, func, method, mMarkov, vCoeff_C, vCoeff_NC, vCoeff_C_initial, vCoeff_NC_initial):
     price_history, mDist0_c, mDist0_nc, mDist0_renter, mDist1_c, mDist1_nc, mDist1_renter, stock_demand_rental_C, stock_demand_rental_NC, vcoastal_beq, vnoncoastal_beq, vsavings_beq=experiments.gen_distribution_now(grids, par, func, method, mMarkov, vCoeff_C, vCoeff_NC, vCoeff_C_initial, vCoeff_NC_initial)

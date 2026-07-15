@@ -411,7 +411,7 @@ def main():
     results_matrix = calibration_regions(param_ranges, dTau_c, do, n)
     
     df = pd.DataFrame(results_matrix)
-    df.to_excel(excel_writer = "/Users/sevimdinlemez/Library/Mobile Documents/com~apple~CloudDocs/Documents/PhD UvA/Projects/Energy price volatilty + inequality/Model/Steady state solution EGM/Calibration/contourmap.xlsx")
+    df.to_excel(excel_writer = "/Users/sevimdinlemez/Library/Mobile Documents/com~apple~CloudDocs/Documents/PhD UvA/Projects/Climate risk + house prices/Python/parameters.xlsx")
     
     
     # n = 200

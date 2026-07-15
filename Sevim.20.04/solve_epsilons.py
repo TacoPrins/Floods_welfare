@@ -34,13 +34,13 @@ import pandas as pd
 import grid_creation as grid_creation
 #import error_statistics as err
 import moments as mom
-import proper_welfare_debug as welfare_stats
 from numba import config
 from scipy.stats import norm
 import plot_creation as plot_creat
 import moments as find_moments
-import experiments as experiments
-
+import experiment_config as experiment_config
+import solve_model as solve_model
+import collect_results as res
 
 def get_g_colors(grids):
     cmap = plt.get_cmap("tab10")
@@ -283,128 +283,296 @@ def plot_tax_equiv_RE_vs_nonRE(
 ### main
 def main():
     # import parameters
-    #vCoeff_C_initial=np.array([0.72392258, 0.,         0.,         0.,         0.        ])
-    #vCoeff_NC_initial=np.array([0.76693964, 0.,         0.,         0.,         0.        ])
-    vCoeff_C_initial=np.array([0.69906474, 0.,         0.,         0.,         0.        ])
-    vCoeff_NC_initial=np.array([0.78259554, 0.,         0.,         0.,         0.        ])
-    vCoeff_C_terminal_RE=np.array([0.58952906 , 0.,0.,0.,0. ])
-    vCoeff_NC_terminal_RE=np.array([0.85484033,0.,0.,0.,0.])
-    vCoeff_C_terminal_HE=np.array([0.64908636, 0.,0.,0.,0. ])
-    vCoeff_NC_terminal_HE=np.array([0.82124315,0.,0.,0.,0.])
-    
-    #vCoeff_C_initial=np.array([0.56, 0.,         0.,         0.,         0.        ])
-    #vCoeff_NC_initial=np.array([0.85, 0.,         0.,         0.,         0.        ])
-    #vCoeff_C_initial=np.array([0.6732231829966053, 0.,         0.,         0.,         0.        ])
-    #vCoeff_NC_initial=np.array([0.7170390048443882, 0.,         0.,         0.,         0.        ])
-    
-
-    method='secant'
 
     par = misc.construct_jitclass(parfile.par_dict)
+    grids=grid_creation.create(par)
+    """Converged coefficients"""
+    # initial coefficients
+    vCoeff_C_initial_HE  = np.array([0.630064, 0.000000, 0.000000, 0.000000, 0.000000])
+    vCoeff_NC_initial_HE = np.array([0.704592, 0.000000, 0.000000, 0.000000, 0.000000])
+    
+    vCoeff_C_initial_RE  = np.array([0.630064, 0.000000, 0.000000, 0.000000, 0.000000])
+    vCoeff_NC_initial_RE = np.array([0.704592, 0.000000, 0.000000, 0.000000, 0.000000])
+    
+    
+    # terminal coefficients
+    vCoeff_C_terminal_HE  = np.array([0.521083, 0.000000, 0.000000, 0.000000, 0.000000])
+    vCoeff_NC_terminal_HE = np.array([0.756270, 0.000000, 0.000000, 0.000000, 0.000000])
+    
+    vCoeff_C_terminal_RE  = np.array([0.521041, 0.000000, 0.000000, 0.000000, 0.000000])
+    vCoeff_NC_terminal_RE = np.array([0.756200, 0.000000, 0.000000, 0.000000, 0.000000])
+    
+    vCoeff_C_terminal_BR  = np.array([0.611530, 0.000000, 0.000000, 0.000000, 0.000000])
+    vCoeff_NC_terminal_BR = np.array([0.738228, 0.000000, 0.000000, 0.000000, 0.000000])
+    
+    vCoeff_C_terminal_MP  = np.array([0.504351, 0.000000, 0.000000, 0.000000, 0.000000])
+    vCoeff_NC_terminal_MP = np.array([0.752983, 0.000000, 0.000000, 0.000000, 0.000000])
+    
+    
+    # baseline / HE transition coefficients
+    vCoeff_C  = np.array([0.567643, -0.060880,  0.002957,  0.008420,  0.001462])
+    vCoeff_NC = np.array([0.731398,  0.024103, -0.001520, -0.002620,  0.000751])
+    
+    
+    # rational expectations transition coefficients
+    vCoeff_C_RE  = np.array([0.564674, -0.057240,  0.003378,  0.006191,  0.002016])
+    vCoeff_NC_RE = np.array([0.731454,  0.024241, -0.001665, -0.002878,  0.000382])
+    
+    
+    # mortgage premium experiment coefficients
+    vCoeff_C_MortPrem  = np.array([0.536954, -0.047918, -0.006990,  0.015263, -0.002136])
+    vCoeff_NC_MortPrem = np.array([0.715914,  0.033233, -0.008939,  0.002877, -0.000985])
+    
+    
+    # building restriction experiment coefficients
+    vCoeff_C_BuildRest  = np.array([0.590399, -0.005430, -0.013503,  0.013706, -0.004146])
+    vCoeff_NC_BuildRest = np.array([0.722909,  0.029037, -0.011394,  0.002883, -0.001576])
+    
 
     
+        
+    """Solve for coefficients"""
+    solve_initial_ss_HE = misc.construct_jitclass(experiment_config.solve_initial_ss_HE)
+    solve_terminal_ss_HE = misc.construct_jitclass(experiment_config.solve_terminal_ss_HE)
+    solve_initial_ss_RE = misc.construct_jitclass(experiment_config.solve_initial_ss_RE)
+    solve_terminal_ss_RE = misc.construct_jitclass(experiment_config.solve_terminal_ss_RE)
+    solve_terminal_ss_building_rest = misc.construct_jitclass(experiment_config.solve_terminal_ss_building_rest)
+    solve_terminal_ss_mortgage_premium = misc.construct_jitclass(experiment_config.solve_terminal_ss_mortgage_premium)
+    find_coeff_path_HE = misc.construct_jitclass(experiment_config.find_coeff_path_HE)
+    find_coeff_path_RE = misc.construct_jitclass(experiment_config.find_coeff_path_RE)
+    path_until_experiment = misc.construct_jitclass(experiment_config.path_until_experiment)
+    find_coeff_buildingrest = misc.construct_jitclass(experiment_config.find_coeff_buildingrest) 
+    find_coeff_mortgageprem = misc.construct_jitclass(experiment_config.find_coeff_mortgageprem) 
+    transition_path = misc.construct_jitclass(experiment_config.transition_path)
+    transition_path_RE = misc.construct_jitclass(experiment_config.transition_path_RE)
+    experiment_building_rest = misc.construct_jitclass(experiment_config.experiment_building_rest)
+    experiment_mortgage_prem = misc.construct_jitclass(experiment_config.experiment_mortgage_prem)
+   
+    # # solve:
+    # vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoeff_C_initial_RE, vCoeff_NC_initial_RE, vCoeff_C_terminal_HE, vCoeff_NC_terminal_HE, vCoeff_C_terminal_RE, vCoeff_NC_terminal_RE, vCoeff_C_terminal_BR, vCoeff_NC_terminal_BR, vCoeff_C_terminal_MP, vCoeff_NC_terminal_MP, vCoeff_C_RE, vCoeff_NC_RE, vCoeff_C_HE, vCoeff_NC_HE, vCoeff_C_BR, vCoeff_NC_BR, vCoeff_C_MP, vCoeff_NC_MP=solve_model.solve(par, grids, solve_initial_ss_HE, solve_initial_ss_RE, solve_terminal_ss_HE, solve_terminal_ss_RE, solve_terminal_ss_building_rest,solve_terminal_ss_mortgage_premium,find_coeff_path_HE,find_coeff_path_RE, path_until_experiment, find_coeff_buildingrest, find_coeff_mortgageprem)
     
+    # coefficients = {
+    # "initial_HE_C": vCoeff_C_initial_HE,
+    # "initial_HE_NC": vCoeff_NC_initial_HE,
+    # "initial_RE_C": vCoeff_C_initial_RE,
+    # "initial_RE_NC": vCoeff_NC_initial_RE,
+
+    # "terminal_HE_C": vCoeff_C_terminal_HE,
+    # "terminal_HE_NC": vCoeff_NC_terminal_HE,
+    # "terminal_RE_C": vCoeff_C_terminal_RE,
+    # "terminal_RE_NC": vCoeff_NC_terminal_RE,
+    # "terminal_BR_C": vCoeff_C_terminal_BR,
+    # "terminal_BR_NC": vCoeff_NC_terminal_BR,
+    # "terminal_MP_C": vCoeff_C_terminal_MP,
+    # "terminal_MP_NC": vCoeff_NC_terminal_MP,
+
+    # "transition_RE_C": vCoeff_C_RE,
+    # "transition_RE_NC": vCoeff_NC_RE,
+    # "transition_HE_C": vCoeff_C_HE,
+    # "transition_HE_NC": vCoeff_NC_HE,
+    # "transition_BR_C": vCoeff_C_BR,
+    # "transition_BR_NC": vCoeff_NC_BR,
+    # "transition_MP_C": vCoeff_C_MP,
+    # "transition_MP_NC": vCoeff_NC_MP,
+    # }
     
+    # df = pd.DataFrame.from_dict(
+    #     coefficients,
+    #     orient="index",
+    #     columns=["coeff_0", "coeff_1", "coeff_2", "coeff_3", "coeff_4"],
+    # )
+    
+    # df.index.name = "coefficient_set"
+    
+    # excel_path = (
+    #     "/Users/sevimdinlemez/Library/Mobile Documents/"
+    #     "com~apple~CloudDocs/Documents/PhD UvA/Projects/"
+    #     "Climate risk + house prices/Python/coefficients.xlsx"
+    # )
+    
+    # df.to_excel(
+    #     excel_writer=excel_path,
+    #     sheet_name="coefficients",
+    #     index=True,
+    # )
+    
+    # print(df)
     
  
     # create grids
+    """Steady state moments"""
+    # vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter,_,_,_ = household_problem.solve_ss(grids, par, vCoeff_C_initial_HE[0], vCoeff_NC_initial_HE[0], solve_initial_ss_HE)
+    # mDist1_c, mDist1_nc, mDist1_renter, rental_stock_C_out, rental_stock_NC_out, coastal_beq, noncoastal_beq, savings_beq, no_beq=sim.stat_dist_finder(par, grids, vt_stay_c[0,], vt_stay_nc[0,], vt_renter[0,], b_stay_c[0,], b_stay_nc[0,], b_renter[0,], vCoeff_C_initial_HE,vCoeff_NC_initial_HE, solve_initial_ss_HE)
+    # dP_C_lom=lom.LoM(par,grids,0, vCoeff_C_initial_HE)
+    # dP_NC_lom=lom.LoM(par, grids,0, vCoeff_NC_initial_HE)
     
-    mMarkov, vE = tauch.tauchen(par.dRho, par.dSigmaeps, par.iNumStates, par.iM, par.time_increment)
-    grids, mMarkov=grid_creation.create(par)
+    # # MODEL MOMENTS
+    # HO_C_share, HO_NC_share, R_C_share, R_NC_share, HO_C_share_before35, HO_NC_share_before35, HO_C_share_death, HO_NC_share_death, total_NW_HO_C, total_NW_HO_NC, total_NW_R, total_NW_HO, total_NW_age_15, total_NW_age_27, total_NW_all_ages, median_NW_age_15, median_NW_age_27, median_NW_all_ages, thirtythree_percentile_NW_age_27, sixtyseven_percentile_NW_age_27, thirtythree_percentile_NW_age_30, sixtyseven_percentile_NW_age_30, tenth_percentile_housing, median_housing, ninetieth_percentile_housing, cumdens_housing_all_ages, NW_housing_share_sorted=find_moments.calc_moments(par, grids, 0, mDist1_c, mDist1_nc,mDist1_renter,  vCoeff_C_initial_HE, vCoeff_NC_initial_HE)
+    # total_saving_model = median_NW_all_ages
+    # NW_decay_model = total_NW_age_27/total_NW_age_15
+    # bequest_ineq_model = sixtyseven_percentile_NW_age_30/thirtythree_percentile_NW_age_30
+    # homeownership_model = HO_C_share+HO_NC_share
+    # price_diff_model = (dP_C_lom-dP_NC_lom)/dP_NC_lom
+    # homeownership_young_model = HO_C_share_before35 + HO_NC_share_before35
+    # med_housing_model = median_housing
     
+  
     
-    #Create initial guess for house prices - coastal price falls one to one with flood risk, and noncoastal rises by less than half 
-    #t_cheby=(2*grids.vTime-(grids.vTime[0]+grids.vTime[-1]))/(grids.vTime[-1]-grids.vTime[0])
-    #t_1=t_cheby
-    #t_2=2*t_cheby**2-1
-    #t_3=4*t_cheby**3-3*t_cheby
-    #t_4=8*t_cheby**4-8*t_cheby**2+1
+    # # DATA MOMENTS
+    # total_saving_data = 1.2
+    # NW_decay_data = 1.51
+    # bequest_ineq_data = 3.24
+    # homeownership = 0.66
+    # price_diff = -0.114
+    # homeownership_young = 0.39
+    # med_housing = 0.5
     
-    #X = np.column_stack((t_1, t_2, t_3, t_4))    
-    #X = np.column_stack((np.ones(len(X)), X))
-    #y_c=(1-1*(par.vPi_S_median-par.vPi_S_median[0]))*vCoeff_C_initial[0]
-    #beta_c = np.linalg.inv(X.T @ X) @ X.T @ y_c
-    #y_nc=(1+0.25*(par.vPi_S_median-par.vPi_S_median[0]))*vCoeff_NC_initial[0]
-    #beta_nc = np.linalg.inv(X.T @ X) @ X.T @ y_nc
+    # print('total_saving_model', total_saving_model, 'data:' , total_saving_data)
+    # print('NW_decay_data', NW_decay_model, 'data:', NW_decay_data)
+    # print('bequest_ineq_data', bequest_ineq_model, 'data:', bequest_ineq_data)
+    # print('homeownership', homeownership_model, 'data:', homeownership)
+    # print('total_saving_model', price_diff_model, 'data:', price_diff)
+    # print('homeownership_young_model', homeownership_young_model, 'data:', homeownership_young)
+    # print('med_housing_model', med_housing_model, 'data:', med_housing)
+    
+    """Collect results along the transition"""
+    calculate_welfare = True # (default is true)
+    tax_equiv_C_RE, tax_equiv_NC_RE, tax_equiv_renter_RE, tax_equiv_newborns_RE, tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns, tax_equiv_C_BR, tax_equiv_NC_BR, tax_equiv_renter_BR, tax_equiv_newborns_BR , tax_equiv_C_MP, tax_equiv_NC_MP, tax_equiv_renter_MP, tax_equiv_newborns_MP = res.collect_results(par, grids, vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoeff_C, vCoeff_NC, vCoeff_C_RE, vCoeff_NC_RE, vCoeff_C_MortPrem, vCoeff_NC_MortPrem, vCoeff_C_BuildRest, vCoeff_NC_BuildRest, solve_initial_ss_HE, solve_initial_ss_RE, path_until_experiment,transition_path, transition_path_RE, experiment_building_rest, experiment_mortgage_prem,vCoeff_C_terminal_RE,vCoeff_NC_terminal_RE, vCoeff_C_terminal_HE, vCoeff_NC_terminal_HE, calculate_welfare)
+    results = {
+    "RE_C": (
+        "rational_expectations",
+        "owner_C",
+        tax_equiv_C_RE,
+    ),
+    "RE_NC": (
+        "rational_expectations",
+        "owner_NC",
+        tax_equiv_NC_RE,
+    ),
+    "RE_renter": (
+        "rational_expectations",
+        "renter",
+        tax_equiv_renter_RE,
+    ),
+    "RE_newborns": (
+        "rational_expectations",
+        "newborn",
+        tax_equiv_newborns_RE,
+    ),
 
-    # baseline coefficients
-    vCoeff_C=np.array([ 0.66335385, -0.03015386,  0.00541847,  0.00797395,  0.00249396])
-    vCoeff_NC=np.array([ 0.81033554,  0.01679082, -0.00574326, -0.00115107,  0.00101112])
-    # rational expectations
-    vCoeff_C_RE=np.array([ 0.6355361, -0.05750348,0.00171657, 0.00611094,0.00187107])
-    vCoeff_NC_RE=np.array([ 0.82617263, 0.03256824, -0.00530541,-0.00385609,0.00083488])
+    "HE_C": (
+        "baseline_HE",
+        "owner_C",
+        tax_equiv_C,
+    ),
+    "HE_NC": (
+        "baseline_HE",
+        "owner_NC",
+        tax_equiv_NC,
+    ),
+    "HE_renter": (
+        "baseline_HE",
+        "renter",
+        tax_equiv_renter,
+    ),
+    "HE_newborns": (
+        "baseline_HE",
+        "newborn",
+        tax_equiv_newborns,
+    ),
+
+    "BR_C": (
+        "building_restrictions",
+        "owner_C",
+        tax_equiv_C_BR,
+    ),
+    "BR_NC": (
+        "building_restrictions",
+        "owner_NC",
+        tax_equiv_NC_BR,
+    ),
+    "BR_renter": (
+        "building_restrictions",
+        "renter",
+        tax_equiv_renter_BR,
+    ),
+    "BR_newborns": (
+        "building_restrictions",
+        "newborn",
+        tax_equiv_newborns_BR,
+    ),
+
+    "MP_C": (
+        "mortgage_premium",
+        "owner_C",
+        tax_equiv_C_MP,
+    ),
+    "MP_NC": (
+        "mortgage_premium",
+        "owner_NC",
+        tax_equiv_NC_MP,
+    ),
+    "MP_renter": (
+        "mortgage_premium",
+        "renter",
+        tax_equiv_renter_MP,
+    ),
+    "MP_newborns": (
+        "mortgage_premium",
+        "newborn",
+        tax_equiv_newborns_MP,
+    ),
+    }
     
-    # experiments
-    vCoeff_C_FullInfo=np.array([ 0.62190337, -0.04657477,  0.00822706,  0.00254822,  0.0029312 ])
-    vCoeff_NC_FullInfo=np.array([ 8.36567710e-01,  2.38785227e-02, -3.96488165e-03, -4.07334828e-04, 2.94338367e-03])
     
-    vCoeff_C_MortPrem=np.array([ 0.60283944, -0.03230899 , 0.00632542 , 0.00427402 , 0.00216904])
-    vCoeff_NC_MortPrem=np.array([ 0.82201948,  0.0387811,  -0.00752305, -0.00082637,  0.00164538])
+    # Convert every result matrix into a tidy DataFrame
+    result_dfs = {}
     
-    vCoeff_C_BuildRest=np.array([ 6.81602502e-01 , -8.07457881e-03 , 3.86486531e-03,  -1.06947614e-04, -2.08610665e-03])
-    vCoeff_NC_BuildRest=np.array([ 8.31532378e-01,  1.05865362e-02, -5.59932690e-03,  2.01406823e-03, 2.95968620e-04])
-    plot_creat.plot_price_transition_exp(
-        vCoeff_C_initial,
-        vCoeff_NC_initial,
-        vCoeff_C,
-        vCoeff_NC,
-        vCoeff_C_MortPrem,
-        vCoeff_NC_MortPrem,
-        par,
-        grids,
-        'Mortgage premium introduction 2026',
-        switch_index=14,
+    for sheet_name, (scenario, household, array) in results.items():
+    
+        result_dfs[sheet_name] = res.tax_equiv_to_long(
+            array=array,
+            scenario=scenario,
+            household=household,
+            grids=grids,
+            par=par,
+        )
+    
+    
+    # Combine all matrices into one tidy dataset
+    df_all = pd.concat(
+        result_dfs.values(),
+        ignore_index=True,
     )
     
-    plot_creat.plot_price_transition_exp(
-        vCoeff_C_initial,
-        vCoeff_NC_initial,
-        vCoeff_C,
-        vCoeff_NC,
-        vCoeff_C_BuildRest,
-        vCoeff_NC_BuildRest,
-        par,
-        grids,
-        'Building restriction introduction 2026',
-        switch_index=14,
+    
+    excel_path = (
+        "/Users/sevimdinlemez/Library/Mobile Documents/"
+        "com~apple~CloudDocs/Documents/PhD UvA/Projects/"
+        "Climate risk + house prices/Python/welfare.xlsx"
     )
     
     
-    method='secant'
-    func=False
-    # initial=True
-    # sceptics=False 
-    # welfare=True
+    # Save one combined sheet plus a separate sheet for each result matrix
+    with pd.ExcelWriter(
+        excel_path,
+        engine="openpyxl",
+    ) as writer:
     
-    # tax_equiv_C_RE, tax_equiv_NC_RE, tax_equiv_renter_RE, tax_equiv_newborns_RE =  welfare_stats.find_expenditure_equiv_GK_SLR(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_RE, vCoeff_NC_RE, False)
-    # tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns =  welfare_stats.find_expenditure_equiv_GK_SLR(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C, vCoeff_NC, True)
-
-
-    # plot_tax_equiv(grids, 100*-tax_equiv_C[:,:], 100*-tax_equiv_NC[:,:], 100*-tax_equiv_renter[:,:], 'Expenditure equivalent - Renters')
-    # plot_tax_equiv_newborns(grids, 100*-tax_equiv_newborns[:,:,:])
-    # plot_tax_equiv_RE_vs_nonRE(grids,100*-tax_equiv_C,100*-tax_equiv_NC,100*-tax_equiv_renter,100*-tax_equiv_C_RE, 100*-tax_equiv_NC_RE,100*-tax_equiv_renter_RE)
-
-    # plot_tax_equiv_newborns_RE_vs_nonRE(grids,100*-tax_equiv_newborns,100*-tax_equiv_newborns_RE)
-
-    # run experiments:
-    # price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter,  vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = experiments.building_restriction_experiments(par, func, method, vCoeff_C, vCoeff_NC, vCoeff_C_BuildRest, vCoeff_NC_BuildRest, vCoeff_C_initial, vCoeff_NC_initial)    
-    # price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter, vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = experiments.mortgage_experiment(par, func, method, vCoeff_C, vCoeff_NC, vCoeff_C_MortPrem, vCoeff_NC_MortPrem, vCoeff_C_initial, vCoeff_NC_initial)    
-    # price_history, dP_C_vec_experiment, dP_NC_vec_experiment, vCoeff_C_experiment, vCoeff_NC_experiment, vt_stay_c, vt_stay_nc, vt_renter,  vt_stay_c_wf, vt_stay_nc_wf, vt_renter_wf = experiments.full_information_experiment(par, func, method,  vCoeff_C, vCoeff_NC, vCoeff_C_FullInfo, vCoeff_NC_FullInfo, vCoeff_C_initial, vCoeff_NC_initial)
-    # print('price history')
-    # print(price_history)
+        df_all.to_excel(
+            excel_writer=writer,
+            sheet_name="all_results",
+            index=False,
+        )
     
-    print('vCoeff_NC_experiment')
-    print(vCoeff_NC_experiment)
+        for sheet_name, df in result_dfs.items():
     
-    print('vCoeff_C_experiment')
-    print(vCoeff_C_experiment)
-    
-    print('dP_NC_vec_experiment')
-    print(dP_NC_vec_experiment)
-    
-    print('dP_C_vec_experiment')
-    print(dP_C_vec_experiment)
-    
+            df.to_excel(
+                excel_writer=writer,
+                sheet_name=sheet_name,
+                index=False,
+            )
+        
 ###########################################################
 
 ### start main

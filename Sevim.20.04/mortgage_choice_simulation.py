@@ -70,15 +70,5 @@ def solve(par,grids,vt_stay_input,j,h,e, dZ, dP,mortgage_start,max_ltv_cache_cho
                     ltv_out[m_index_sim] = 0
                     vt_stay[m_index_sim]=candidate_value
     
-    for m_index_sim in range(grids.vM_sim.size):
-        if ltv_out[m_index_sim]>grids.vL_sim[-1] and vt_stay[m_index_sim]>-1e12+1e-8:
-            print(ltv_out[m_index_sim])
-            print(j,h,e, dZ)
-            print(dP)
-            print(mortgage_start)
-            print(max_ltv_cache_choice_index_left)
-            print(min_payment)
-            print(ltv_cache_minpay_index_left)
-            assert ltv_out[m_index_sim]<=grids.vL_sim[-1]
                  
     return vt_stay, ltv_out, m_out
