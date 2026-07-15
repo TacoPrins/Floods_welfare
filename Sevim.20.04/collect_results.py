@@ -86,21 +86,19 @@ def collect_results(par, grids, vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoef
     "(2) baseline transition with sceptics"
     # run generate price path without experiments, with sceptics. save the (collapsed) distributions. Also save the 2026 distributions and welfare value functions
     _, _, _, _, _, _, vcoastal_beq, vnoncoastal_beq, vsavings_beq, _, _, _, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf, full_dist_C_HE, full_dist_NC_HE, full_dist_renter_HE =equil.generate_pricepath(grids, par, vCoeff_C,vCoeff_NC, dP_C_initial, dP_NC_initial, mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, transition_path)    
-    vTotal_bequest = vcoastal_beq + vnoncoastal_beq + vsavings_beq
     "(3) baseline transition without sceptics (RE)"
     # run generate price path without experiments, without sceptics. save the (collapsed) distributions and welfare value functions
     price_history_RE, _, _, _, _, _, vcoastal_beq_RE, vnoncoastal_beq_RE, vsavings_beq_RE, _, _, _, v_owner_c_wf_RE, v_owner_nc_wf_RE, v_nonowner_wf_RE, full_dist_C_RE, full_dist_NC_RE, full_dist_renter_RE = equil.generate_pricepath(grids, par, vCoeff_C_RE, vCoeff_NC_RE, dP_C_initial, dP_NC_initial, mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, transition_path_RE)
-    vTotal_bequest_RE = vcoastal_beq_RE + vnoncoastal_beq_RE + vsavings_beq_RE
     
     "Plots of distributions"
     ### PLOT - Baseline model dynamics (leverage, savings, sorting, etc.) Use: full_dist_C_HE, full_dist_NC_HE, full_dist_renter_HE, full_dist_C_RE, full_dist_NC_RE, full_dist_renter_RE 
     
-    del full_dist_C_HE, full_dist_NC_HE, full_dist_renter_HE, full_dist_C_RE, full_dist_NC_RE, full_dist_renter_RE, vcoastal_beq, vnoncoastal_beq, vsavings_beq, vcoastal_beq_RE, vnoncoastal_beq_RE, vsavings_beq_RE
+    del full_dist_C_HE, full_dist_NC_HE, full_dist_renter_HE, full_dist_C_RE, full_dist_NC_RE, full_dist_renter_RE
     
     if calculate_welfare:
         "WELFARE COSTS OF MISBELIEFS"
-        tax_equiv_C_RE, tax_equiv_NC_RE, tax_equiv_renter_RE, tax_equiv_newborns_RE =  welfare_stats.find_expenditure_equiv_EK_SLR(par, grids, vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoeff_C_RE, vCoeff_NC_RE, mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, vTotal_bequest_RE, v_owner_c_wf_RE, v_owner_nc_wf_RE, v_nonowner_wf_RE, solve_initial_ss_HE, transition_path_RE)
-        tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns             =  welfare_stats.find_expenditure_equiv_EK_SLR(par, grids, vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoeff_C, vCoeff_NC, mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, vTotal_bequest, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf, solve_initial_ss_HE, transition_path)
+        tax_equiv_C_RE, tax_equiv_NC_RE, tax_equiv_renter_RE, tax_equiv_newborns_RE =  welfare_stats.find_expenditure_equiv_EK_SLR(par, grids, vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoeff_C_RE, vCoeff_NC_RE, mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, vcoastal_beq_RE, vnoncoastal_beq_RE, vsavings_beq_RE, v_owner_c_wf_RE, v_owner_nc_wf_RE, v_nonowner_wf_RE, solve_initial_ss_HE, transition_path_RE)
+        tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns             =  welfare_stats.find_expenditure_equiv_EK_SLR(par, grids, vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoeff_C, vCoeff_NC, mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS,  vcoastal_beq, vnoncoastal_beq, vsavings_beq, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf, solve_initial_ss_HE, transition_path)
     
     
     """############################################################################
@@ -115,7 +113,7 @@ def collect_results(par, grids, vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoef
     if calculate_welfare:
         "(4) + (5) welfare effects of policy: building restrictions and mortgage premium"
         print("start with welfare of policy")
-        tax_equiv_C_MP, tax_equiv_NC_MP, tax_equiv_renter_MP, tax_equiv_newborns_MP,tax_equiv_C_BR, tax_equiv_NC_BR, tax_equiv_renter_BR, tax_equiv_newborns_BR = welfare_stats.find_expenditure_equiv_EK_policy(par, grids, vCoeff_C, vCoeff_NC,vCoeff_C_MortPrem, vCoeff_NC_MortPrem, vCoeff_C_BuildRest, vCoeff_NC_BuildRest, mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, vTotal_bequest, transition_path, experiment_mortgage_prem, experiment_building_rest)
+        tax_equiv_C_MP, tax_equiv_NC_MP, tax_equiv_renter_MP, tax_equiv_newborns_MP,tax_equiv_C_BR, tax_equiv_NC_BR, tax_equiv_renter_BR, tax_equiv_newborns_BR = welfare_stats.find_expenditure_equiv_EK_policy(par, grids, vCoeff_C, vCoeff_NC,vCoeff_C_MortPrem, vCoeff_NC_MortPrem, vCoeff_C_BuildRest, vCoeff_NC_BuildRest, mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, vcoastal_beq, vnoncoastal_beq, vsavings_beq, transition_path, experiment_mortgage_prem, experiment_building_rest)
     # tax_equiv_C_BR, tax_equiv_NC_BR, tax_equiv_renter_BR, tax_equiv_newborns_BR  = welfare_stats.find_expenditure_equiv_EK_policy(par, grids, vCoeff_C, vCoeff_NC, vCoeff_C_BuildRest, vCoeff_NC_BuildRest, mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, vTotal_bequest, transition_path, experiment_building_rest)
     # tax_equiv_C_MP, tax_equiv_NC_MP, tax_equiv_renter_MP, tax_equiv_newborns_MP  = welfare_stats.find_expenditure_equiv_EK_policy(par, grids, vCoeff_C, vCoeff_NC, vCoeff_C_MortPrem, vCoeff_NC_MortPrem, mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, vTotal_bequest, transition_path, experiment_mortgage_prem)
      

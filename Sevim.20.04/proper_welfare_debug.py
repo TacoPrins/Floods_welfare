@@ -16,8 +16,9 @@ from numba import njit
 import LoM_epsilons as lom
 
 @njit
-def find_expenditure_equiv_EK_SLR(par, grids, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_in, vCoeff_NC_in,mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, vTotal_bequest, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf, solve_initial_ss_HE, config):
-
+def find_expenditure_equiv_EK_SLR(par, grids, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_in, vCoeff_NC_in,mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, vcoastal_beq, vnoncoastal_beq, vsavings_beq, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf, solve_initial_ss_HE, config):
+    dP_C_lom=lom.LoM_path(par,grids,vCoeff_C_in, config)
+    dP_NC_lom=lom.LoM_path(par,grids,vCoeff_NC_in, config)
     if config.sceptics == False:
         k_dim=1
     else:
@@ -81,21 +82,11 @@ def find_expenditure_equiv_EK_SLR(par, grids, vCoeff_C_initial, vCoeff_NC_initia
             
         
     for t_index in range(grids.vTime.size-1):
-        # dP_C=price_history[t_index,0]
-        # dP_NC=price_history[t_index,1]
-        # coastal_damage_frac=grids.vPi_S_median[t_index]*np.dot(grids.vPDF_z[1:],(1-grids.vZ[1:]))
-        # housing_bequest=coastal_beq*(1-coastal_damage_frac-par.dDelta)*dP_C + noncoastal_beq*(1-par.dDelta)*dP_NC
-        # total_bequest = (housing_bequest+savings_beq*(1+par.r))*par.iNj
-        total_bequest = vTotal_bequest[t_index]
-        mPi_joint=initial_joint_sim.initial_joint(par, grids, total_bequest)
+        newborn_dist = sim.gen_initial_dist(par, grids, t_index, dP_C_lom[t_index], dP_NC_lom[t_index], vcoastal_beq[t_index], vnoncoastal_beq[t_index], vsavings_beq[t_index], config.sceptics)
         # weight
         for k_index in range(k_dim):
             for e_index in range(grids.vE.size):
-                if config.sceptics==True:
-                    newborn_dist= (1/par.iNj)*(1/grids.vG.size)*grids.mTypes[t_index,k_index]*mPi_joint[:,e_index]        
-                else:
-                    newborn_dist= (1/par.iNj)*(1/grids.vG.size)*mPi_joint[:,e_index]     
-                wf_SLR_newborns = np.sum(newborn_dist* v_nonowner_wf_expanded_SLR[t_index,0,k_index, :, :,e_index])
+                wf_SLR_newborns = np.sum(newborn_dist[k_index,:,:,e_index]* v_nonowner_wf_expanded_SLR[t_index,0,k_index, :, :,e_index])
                 for wf_idx in range(wf_loss.size):
                     ce_renter_newborns[wf_idx,t_index, k_index, e_index] = wf_SS_newborns[wf_idx, k_index,e_index] - wf_SLR_newborns 
             
@@ -227,7 +218,7 @@ def find_expenditure_equiv_EK_SLR(par, grids, vCoeff_C_initial, vCoeff_NC_initia
 #     return tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns
 
 #@njit
-def find_expenditure_equiv_EK_policy(par, grids, vCoeff_C_in, vCoeff_NC_in,vCoeff_C_MP_in, vCoeff_NC_MP_in,vCoeff_C_BR_in, vCoeff_NC_BR_in,mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, vTotal_bequest_HE, config_nopol, config_MP, config_BR):
+def find_expenditure_equiv_EK_policy(par, grids, vCoeff_C_in, vCoeff_NC_in,vCoeff_C_MP_in, vCoeff_NC_MP_in,vCoeff_C_BR_in, vCoeff_NC_BR_in,mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, vcoastal_beq, vnoncoastal_beq, vsavings_beq, config_nopol, config_MP, config_BR):
     """
     New: import the value functions at the time of policy introduction as well as the distribution:
     I call it the 'business as usual' (BAU) value functions
@@ -242,6 +233,8 @@ def find_expenditure_equiv_EK_policy(par, grids, vCoeff_C_in, vCoeff_NC_in,vCoef
     Find tax_wf that eqaulizes
     """
     print('lets get started')
+    dP_C_lom=lom.LoM_path(par,grids,vCoeff_C_in, config_nopol)
+    dP_NC_lom=lom.LoM_path(par,grids,vCoeff_NC_in, config_nopol)
     if config_BR.sceptics == False:
         k_dim=1
     else:
@@ -290,24 +283,24 @@ def find_expenditure_equiv_EK_policy(par, grids, vCoeff_C_in, vCoeff_NC_in,vCoef
             wf_MP_pol_c[k_index,e_index] = np.sum(mDist1_c_2026[1:,k_index, :, :,:,:,e_index]* v_owner_c_wf_expanded_MP[t_pol,1:,k_index, :, :,:,:,e_index])
             wf_MP_pol_nc[k_index,e_index] = np.sum(mDist1_nc_2026[1:,k_index, :, :,:,:,e_index]* v_owner_nc_wf_expanded_MP[t_pol,1:,k_index, :, :,:,:,e_index])
             wf_MP_pol_rent[k_index,e_index] = np.sum(mDist1_renter_2026[:,k_index, :, :,e_index]* v_nonowner_wf_expanded_MP[t_pol,:,k_index, :, :,e_index])
+    del v_owner_c_wf_expanded_MP[t_pol,1:,:, :, :,:,:,:], v_owner_nc_wf_expanded_MP[t_pol,1:,:, :, :,:,:,:], v_nonowner_wf_expanded_MP[t_pol,:,:, :, :,:]
+    print('MP done, next!')
+    for k_index in range(k_dim):
+        for e_index in range(grids.vE.size):
             wf_BR_pol_c[k_index,e_index] = np.sum(mDist1_c_2026[1:,k_index, :, :,:,:,e_index]* v_owner_c_wf_expanded_BR[t_pol,1:,k_index, :, :,:,:,e_index])
             wf_BR_pol_nc[k_index,e_index] = np.sum(mDist1_nc_2026[1:,k_index, :, :,:,:,e_index]* v_owner_nc_wf_expanded_BR[t_pol,1:,k_index, :, :,:,:,e_index])
             wf_BR_pol_rent[k_index,e_index] = np.sum(mDist1_renter_2026[:,k_index, :, :,e_index]* v_nonowner_wf_expanded_BR[t_pol,:,k_index, :, :,e_index])
+        del v_owner_c_wf_expanded_BR[t_pol,1:,:, :, :,:,:,:], v_owner_nc_wf_expanded_BR[t_pol,1:,:, :, :,:,:,:], v_nonowner_wf_expanded_BR[t_pol,:,:, :, :,:]
 
     print('All welfare policy cases have been calculated on k,e')
     for t_index in range(t_pol, grids.vTime.size-1):
-        total_bequest = vTotal_bequest_HE[t_index]
-        mPi_joint=initial_joint_sim.initial_joint(par, grids, total_bequest)
+        newborn_dist = sim.gen_initial_dist(par, grids, t_index, dP_C_lom[t_index], dP_NC_lom[t_index], vcoastal_beq[t_index], vnoncoastal_beq[t_index], vsavings_beq[t_index], config_nopol.sceptics)
         # weight
         for k_index in range(k_dim):
             for e_index in range(grids.vE.size):
-                if config_BR.sceptics==True:
-                    newborn_dist = (1/par.iNj)*(1/grids.vG.size)*grids.mTypes[t_index,k_index]*mPi_joint[:,e_index]        
-                else:
-                    newborn_dist = (1/par.iNj)*(1/grids.vG.size)*mPi_joint[:,e_index]     
                 # NOTE HERE: Size wf_pol_newborns is grids.vTime.size. It starts fillling here from 14, until grids.vTime.size
-                wf_MP_pol_newborns[t_index,k_index,e_index] = np.sum(newborn_dist * v_nonowner_wf_expanded_MP[t_index,0,k_index, :, :,e_index])
-                wf_BR_pol_newborns[t_index,k_index,e_index] = np.sum(newborn_dist * v_nonowner_wf_expanded_BR[t_index,0,k_index, :, :,e_index])
+                wf_MP_pol_newborns[t_index,k_index,e_index] = np.sum(newborn_dist[k_index,:,:,e_index] * v_nonowner_wf_expanded_MP[t_index,0,k_index, :, :,e_index])
+                wf_BR_pol_newborns[t_index,k_index,e_index] = np.sum(newborn_dist[k_index,:,:,e_index] * v_nonowner_wf_expanded_BR[t_index,0,k_index, :, :,e_index])
     print('newborns done too now!')
 
     for wf_idx in range(wf_loss.size):
@@ -327,16 +320,11 @@ def find_expenditure_equiv_EK_policy(par, grids, vCoeff_C_in, vCoeff_NC_in,vCoef
                 ce_renter_BR[wf_idx,k_index,e_index]=np.sum(mDist1_renter_2026[:,k_index, :, :,e_index]* v_nonowner_wf_expanded_BAU[t_pol,:,k_index, :, :,e_index])-wf_BR_pol_rent[k_index,e_index]
         
         for t_index in range(t_pol, grids.vTime.size-1):
-            total_bequest = vTotal_bequest_HE[t_index]
-            mPi_joint=initial_joint_sim.initial_joint(par, grids, total_bequest)
+            newborn_dist = sim.gen_initial_dist(par, grids, t_index, dP_C_lom[t_index], dP_NC_lom[t_index], vcoastal_beq[t_index], vnoncoastal_beq[t_index], vsavings_beq[t_index], config_nopol.sceptics)
             for k_index in range(k_dim):
                 for e_index in range(grids.vE.size):
-                    if config_BR.sceptics==True:
-                        newborn_dist= (1/par.iNj)*(1/grids.vG.size)*grids.mTypes[t_index,k_index]*mPi_joint[:,e_index]        
-                    else:
-                        newborn_dist= (1/par.iNj)*(1/grids.vG.size)*mPi_joint[:,e_index]     
-                    ce_renter_newborns_MP[wf_idx,t_index,k_index,e_index] = np.sum(newborn_dist* v_nonowner_wf_expanded_BAU[t_index,0,k_index, :, :,e_index])-wf_MP_pol_newborns[t_index,k_index,e_index]
-                    ce_renter_newborns_BR[wf_idx,t_index,k_index,e_index] = np.sum(newborn_dist* v_nonowner_wf_expanded_BAU[t_index,0,k_index, :, :,e_index])-wf_BR_pol_newborns[t_index,k_index,e_index]
+                    ce_renter_newborns_MP[wf_idx,t_index,k_index,e_index] = np.sum(newborn_dist[k_index,:,:,e_index]* v_nonowner_wf_expanded_BAU[t_index,0,k_index, :, :,e_index])-wf_MP_pol_newborns[t_index,k_index,e_index]
+                    ce_renter_newborns_BR[wf_idx,t_index,k_index,e_index] = np.sum(newborn_dist[k_index,:,:,e_index]* v_nonowner_wf_expanded_BAU[t_index,0,k_index, :, :,e_index])-wf_BR_pol_newborns[t_index,k_index,e_index]
 
     par.wf_wedge[0] = 0.0
     
