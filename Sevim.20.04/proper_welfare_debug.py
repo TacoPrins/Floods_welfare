@@ -283,14 +283,14 @@ def find_expenditure_equiv_EK_policy(par, grids, vCoeff_C_in, vCoeff_NC_in,vCoef
             wf_MP_pol_c[k_index,e_index] = np.sum(mDist1_c_2026[1:,k_index, :, :,:,:,e_index]* v_owner_c_wf_expanded_MP[t_pol,1:,k_index, :, :,:,:,e_index])
             wf_MP_pol_nc[k_index,e_index] = np.sum(mDist1_nc_2026[1:,k_index, :, :,:,:,e_index]* v_owner_nc_wf_expanded_MP[t_pol,1:,k_index, :, :,:,:,e_index])
             wf_MP_pol_rent[k_index,e_index] = np.sum(mDist1_renter_2026[:,k_index, :, :,e_index]* v_nonowner_wf_expanded_MP[t_pol,:,k_index, :, :,e_index])
-    del v_owner_c_wf_expanded_MP[t_pol,1:,:, :, :,:,:,:], v_owner_nc_wf_expanded_MP[t_pol,1:,:, :, :,:,:,:], v_nonowner_wf_expanded_MP[t_pol,:,:, :, :,:]
+    del v_owner_c_wf_expanded_MP, v_owner_nc_wf_expanded_MP
     print('MP done, next!')
     for k_index in range(k_dim):
         for e_index in range(grids.vE.size):
             wf_BR_pol_c[k_index,e_index] = np.sum(mDist1_c_2026[1:,k_index, :, :,:,:,e_index]* v_owner_c_wf_expanded_BR[t_pol,1:,k_index, :, :,:,:,e_index])
             wf_BR_pol_nc[k_index,e_index] = np.sum(mDist1_nc_2026[1:,k_index, :, :,:,:,e_index]* v_owner_nc_wf_expanded_BR[t_pol,1:,k_index, :, :,:,:,e_index])
             wf_BR_pol_rent[k_index,e_index] = np.sum(mDist1_renter_2026[:,k_index, :, :,e_index]* v_nonowner_wf_expanded_BR[t_pol,:,k_index, :, :,e_index])
-        del v_owner_c_wf_expanded_BR[t_pol,1:,:, :, :,:,:,:], v_owner_nc_wf_expanded_BR[t_pol,1:,:, :, :,:,:,:], v_nonowner_wf_expanded_BR[t_pol,:,:, :, :,:]
+    del v_owner_c_wf_expanded_BR, v_owner_nc_wf_expanded_BR
 
     print('All welfare policy cases have been calculated on k,e')
     for t_index in range(t_pol, grids.vTime.size-1):

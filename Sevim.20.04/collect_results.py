@@ -104,7 +104,7 @@ def collect_results(par, grids, vCoeff_C_initial_HE, vCoeff_NC_initial_HE, vCoef
     """############################################################################
     ### Plot 2026 dist
     ############################################################################"""
-    price_history, mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, rental_stock_C_2026, rental_stock_NC_2026, vcoastal_beq, vnoncoastal_beq, vsavings_beq, _, _, _, _, _, _, _, _, _=equil.generate_pricepath(grids, par, vCoeff_C, vCoeff_NC, dP_C_initial, dP_NC_initial, mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, path_until_experiment)
+    price_history, mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, rental_stock_C_2026, rental_stock_NC_2026, _, _, _, _, _, _, _, _, _, _, _, _=equil.generate_pricepath(grids, par, vCoeff_C, vCoeff_NC, dP_C_initial, dP_NC_initial, mDist1_c_SS, mDist1_nc_SS, mDist1_renter_SS, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, path_until_experiment)
     #plot_creat.plot_distribution_2026(price_history, mDist1_c_2026, mDist1_nc_2026, mDist1_renter_2026, rental_stock_C_2026, rental_stock_NC_2026, vcoastal_beq, vnoncoastal_beq, vsavings_beq, vCoeff_C, vCoeff_NC)
     
     """############################################################################
